@@ -2,6 +2,10 @@ package eventmesh
 
 import (
 	"context"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/logging"
@@ -23,4 +27,27 @@ func NewController(ctx context.Context) *controller.Impl {
 	impl := eventtypereconciler.NewImpl(ctx, reconciler)
 
 	return impl
+}
+
+func startWebServer(ctx context.Context) {
+
+	logger := logging.FromContext(ctx)
+
+	logger.Infow("Starting eventmesh-backend webserver")
+
+	r := mux.NewRouter()
+	r.Use(commonMiddleware)
+
+	r.HandleFunc("/", EventMeshHandler(ctx)).Methods("GET")
+	http.Handle("/", r)
+
+	// TODO: port
+	log.Fatal(http.ListenAndServe(":8000", r))
+}
+
+func commonMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
 }

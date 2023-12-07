@@ -3,6 +3,7 @@ module knative.dev/backstage-plugins
 go 1.18
 
 require (
+	github.com/gorilla/mux v1.8.1
 	knative.dev/eventing v0.39.1
 	knative.dev/pkg v0.0.0-20231204120332-9386ad6703ee
 )
