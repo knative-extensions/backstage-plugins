@@ -1,5 +1,5 @@
 {
-  "name": "@internal/plugin-knative-event-mesh-backend",
+  "name": "@knative-extensions/plugin-knative-event-mesh-backend",
   "version": "0.1.0",
   "main": "src/index.ts",
   "types": "src/index.ts",
