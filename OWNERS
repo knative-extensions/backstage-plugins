@@ -1,0 +1,11 @@
+# Sponsored by the Eventing WG
+# At least one WG lead from https://github.com/knative/community/blob/main/working-groups/WORKING-GROUPS.md#eventing
+# must be in the "approvers" list.
+approvers:
+- technical-oversight-committee
+- knative-release-leads
+- eventing-writers
+- backstage-plugins-writers
+
+reviewers:
+- backstage-plugins-reviewers
