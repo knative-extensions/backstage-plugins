@@ -60,7 +60,7 @@ func startWebServer(ctx context.Context, listers Listers) {
 	http.Handle("/", r)
 
 	// TODO: port
-	log.Fatal(http.ListenAndServe(":8000", r))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func commonMiddleware(next http.Handler) http.Handler {
