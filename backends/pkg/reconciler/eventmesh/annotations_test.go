@@ -12,14 +12,24 @@ func TestFilterAnnotations(t *testing.T) {
 		want        map[string]string
 	}{
 		{
+			name:        "nil annotations",
+			annotations: nil,
+			want:        nil,
+		},
+		{
 			name:        "empty annotations",
 			annotations: map[string]string{},
-			want:        map[string]string{},
+			want:        nil,
 		},
 		{
 			name:        "excluded annotation",
 			annotations: map[string]string{"a": "b", "kubectl.kubernetes.io/last-applied-configuration": "foo"},
 			want:        map[string]string{"a": "b"},
+		},
+		{
+			name:        "all excluded",
+			annotations: map[string]string{"kubectl.kubernetes.io/last-applied-configuration": "foo"},
+			want:        nil,
 		},
 	}
 	for _, tt := range tests {
