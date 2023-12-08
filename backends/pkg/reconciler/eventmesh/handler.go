@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"slices"
+	"sort"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
@@ -65,6 +66,13 @@ func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (error, EventMes
 		logger.Errorw("Error listing eventTypes", "error", err)
 		return err, EventMesh{}
 	}
+
+	sort.Slice(fetchedEventTypes, func(i, j int) bool {
+		if fetchedEventTypes[i].Namespace != fetchedEventTypes[j].Namespace {
+			return fetchedEventTypes[i].Namespace < fetchedEventTypes[j].Namespace
+		}
+		return fetchedEventTypes[i].Name < fetchedEventTypes[j].Name
+	})
 
 	logger.Debugw("Fetched event types", "event types", fetchedEventTypes)
 
