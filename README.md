@@ -74,7 +74,7 @@ First, install dependencies:
 ```bash
 # Install dependencies
 cd ./backstage
-yarn install
+yarn install --frozen-lockfile
 ```
 
 The default configuration of the plugin is to use the backend at `http://localhost:8080`.
