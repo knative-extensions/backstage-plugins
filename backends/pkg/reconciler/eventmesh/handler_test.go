@@ -1,11 +1,12 @@
 package eventmesh
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"knative.dev/pkg/apis"
-	"testing"
 
 	"go.uber.org/zap"
 
