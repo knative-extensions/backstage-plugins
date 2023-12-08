@@ -32,63 +32,74 @@ func EventMeshHandler(ctx context.Context, listers Listers) func(w http.Response
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
-		err, convertedBrokers := fetchBrokers(listers.BrokerLister, logger)
+		err, eventMesh := BuildEventMesh(listers, logger)
 		if err != nil {
-			logger.Errorw("Error fetching and converting brokers", "error", err)
+			logger.Errorw("Error building event mesh", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
-
-		brokerMap := make(map[string]*Broker)
-		for _, cbr := range convertedBrokers {
-			brokerMap[cbr.GetNameAndNamespace()] = cbr
-		}
-
-		fetchedEventTypes, err := listers.EventTypeLister.List(labels.Everything())
-		if err != nil {
-			logger.Errorw("Error listing eventTypes", "error", err)
-			return
-		}
-
-		logger.Debugw("Fetched event types", "event types", fetchedEventTypes)
-
-		convertedEventTypeMap := make(EventTypeMap)
-		for _, et := range fetchedEventTypes {
-			namespaceEventTypeRef := NamespaceEventTypeRef(et)
-
-			if et.Spec.Reference != nil {
-				if br, ok := brokerMap[RefNameAndNamespace(et.Spec.Reference)]; ok {
-					// add to broker provided event types
-					// only add if it hasn't been added already
-					if !slices.Contains(br.ProvidedEventTypes, namespaceEventTypeRef) {
-						br.ProvidedEventTypes = append(br.ProvidedEventTypes, namespaceEventTypeRef)
-					}
-				}
-			}
-
-			if _, ok := convertedEventTypeMap[namespaceEventTypeRef]; ok {
-				logger.Debugw("Duplicate event type", "event type", namespaceEventTypeRef)
-				continue
-			}
-
-			convertedEventType := convertEventType(et)
-			convertedEventTypeMap[namespaceEventTypeRef] = &convertedEventType
-		}
-
-		eventMesh := EventMesh{
-			EventTypes: make([]*EventType, 0, len(convertedEventTypeMap)),
-			Brokers:    convertedBrokers,
-		}
-
-		for _, et := range convertedEventTypeMap {
-			eventMesh.EventTypes = append(eventMesh.EventTypes, et)
 		}
 
 		err = json.NewEncoder(w).Encode(eventMesh)
 		if err != nil {
 			logger.Errorw("Error encoding event mesh", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
+}
+
+func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (error, EventMesh) {
+	err, convertedBrokers := fetchBrokers(listers.BrokerLister, logger)
+	if err != nil {
+		logger.Errorw("Error fetching and converting brokers", "error", err)
+		return err, EventMesh{}
+	}
+
+	brokerMap := make(map[string]*Broker)
+	for _, cbr := range convertedBrokers {
+		brokerMap[cbr.GetNameAndNamespace()] = cbr
+	}
+
+	fetchedEventTypes, err := listers.EventTypeLister.List(labels.Everything())
+	if err != nil {
+		logger.Errorw("Error listing eventTypes", "error", err)
+		return err, EventMesh{}
+	}
+
+	logger.Debugw("Fetched event types", "event types", fetchedEventTypes)
+
+	convertedEventTypeMap := make(EventTypeMap)
+	for _, et := range fetchedEventTypes {
+		namespaceEventTypeRef := NamespaceEventTypeRef(et)
+
+		if et.Spec.Reference != nil {
+			if br, ok := brokerMap[RefNameAndNamespace(et.Spec.Reference)]; ok {
+				// add to broker provided event types
+				// only add if it hasn't been added already
+				if !slices.Contains(br.ProvidedEventTypes, namespaceEventTypeRef) {
+					br.ProvidedEventTypes = append(br.ProvidedEventTypes, namespaceEventTypeRef)
+				}
+			}
+		}
+
+		if _, ok := convertedEventTypeMap[namespaceEventTypeRef]; ok {
+			logger.Debugw("Duplicate event type", "event type", namespaceEventTypeRef)
+			continue
+		}
+
+		convertedEventType := convertEventType(et)
+		convertedEventTypeMap[namespaceEventTypeRef] = &convertedEventType
+	}
+
+	eventMesh := EventMesh{
+		EventTypes: make([]*EventType, 0, len(convertedEventTypeMap)),
+		Brokers:    convertedBrokers,
+	}
+
+	for _, et := range convertedEventTypeMap {
+		eventMesh.EventTypes = append(eventMesh.EventTypes, et)
+	}
+	return nil, eventMesh
 }
 
 func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) (error, []*Broker) {
