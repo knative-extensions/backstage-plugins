@@ -2,10 +2,11 @@ package eventmesh
 
 import (
 	"context"
-	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/labels"
 	"net/http"
 	"slices"
+
+	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/apimachinery/pkg/util/json"
 
