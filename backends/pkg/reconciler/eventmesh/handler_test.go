@@ -79,7 +79,113 @@ func TestBuildEventMesh(t *testing.T) {
 					},
 				},
 			},
-			error: false,
+		},
+		{
+			name: "With 1 broker and 2 eventtypes with different spec.types",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype-1", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-1"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+				testingv1beta2.NewEventType("test-eventtype-2", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-2"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:               "test-broker",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype-type-1", "test-ns/test-eventtype-type-2"}},
+				},
+				EventTypes: []*EventType{
+					{
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-1",
+					},
+					{
+						Name:      "test-eventtype-2",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-2",
+					},
+				},
+			},
+		},
+		{
+			name: "With 1 broker and 2 eventtypes with same spec.types deduplicated",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype-1", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+				testingv1beta2.NewEventType("test-eventtype-2", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:               "test-broker",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype-type"}},
+				},
+				EventTypes: []*EventType{
+					// ONLY have the first one
+					{
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+					},
+				},
+			},
+		},
+		{
+			name: "With 2 brokers and 2 eventtypes with same spec.types deduplicated, but using different brokers",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker-1", "test-ns"),
+				testingv1.NewBroker("test-broker-2", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype-1", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker-1", "test-ns")),
+				),
+				testingv1beta2.NewEventType("test-eventtype-2", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker-2", "test-ns")),
+				),
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:               "test-broker-1",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype-type"},
+					},
+					{
+						Name:               "test-broker-2",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype-type"},
+					},
+				},
+				EventTypes: []*EventType{
+					// ONLY have the first one
+					{
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
