@@ -33,7 +33,7 @@ func EventMeshHandler(ctx context.Context, listers Listers) func(w http.Response
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
-		err, eventMesh := BuildEventMesh(listers, logger)
+		eventMesh, err := BuildEventMesh(listers, logger)
 		if err != nil {
 			logger.Errorw("Error building event mesh", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -49,11 +49,11 @@ func EventMeshHandler(ctx context.Context, listers Listers) func(w http.Response
 	}
 }
 
-func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (error, EventMesh) {
-	err, convertedBrokers := fetchBrokers(listers.BrokerLister, logger)
+func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (EventMesh, error) {
+	convertedBrokers, err := fetchBrokers(listers.BrokerLister, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting brokers", "error", err)
-		return err, EventMesh{}
+		return EventMesh{}, err
 	}
 
 	brokerMap := make(map[string]*Broker)
@@ -64,7 +64,7 @@ func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (error, EventMes
 	fetchedEventTypes, err := listers.EventTypeLister.List(labels.Everything())
 	if err != nil {
 		logger.Errorw("Error listing eventTypes", "error", err)
-		return err, EventMesh{}
+		return EventMesh{}, err
 	}
 
 	sort.Slice(fetchedEventTypes, func(i, j int) bool {
@@ -107,14 +107,14 @@ func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (error, EventMes
 	for _, et := range convertedEventTypeMap {
 		eventMesh.EventTypes = append(eventMesh.EventTypes, et)
 	}
-	return nil, eventMesh
+	return eventMesh, nil
 }
 
-func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) (error, []*Broker) {
+func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) ([]*Broker, error) {
 	fetchedBrokers, err := brokerLister.List(labels.Everything())
 	if err != nil {
 		logger.Errorw("Error listing brokers", "error", err)
-		return err, nil
+		return nil, err
 	}
 
 	convertedBrokers := make([]*Broker, 0, len(fetchedBrokers))
@@ -122,7 +122,7 @@ func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.Sugar
 		convertedBroker := convertBroker(br)
 		convertedBrokers = append(convertedBrokers, &convertedBroker)
 	}
-	return err, convertedBrokers
+	return convertedBrokers, err
 }
 
 func NamespaceEventTypeRef(et *eventingb1beta2.EventType) string {
