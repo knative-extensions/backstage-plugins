@@ -26,27 +26,27 @@ describe('KnativeEventMeshProvider', () => {
             {
                 name: 'minimal information',
                 input: {
-                    name: 'test',
-                    namespace: 'test',
-                    type: 'test',
-                    uid: 'test',
+                    name: 'test-name',
+                    namespace: 'test-ns',
+                    type: 'test-type',
+                    uid: 'test-uid',
                 },
                 expected: {
                     apiVersion: 'backstage.io/v1alpha1',
                     kind: 'API',
                     metadata: {
-                        name: 'test',
-                        namespace: 'test',
+                        name: 'test-name',
+                        namespace: 'test-ns',
+                        title: 'test-type - (test-ns/test-name)',
                         description: undefined,
                         annotations: {
-                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test/test",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test/test",
+                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test-ns/test-name",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test-ns/test-name",
                         },
                         labels: {},
                         tags: [],
                         links: [],
                         uid: undefined,
-                        title: undefined,
                         etag: undefined,
                     },
                     spec: {
@@ -61,7 +61,7 @@ describe('KnativeEventMeshProvider', () => {
             {
                 name: 'all information',
                 input: {
-                    name: 'test',
+                    name: 'test-name',
                     namespace: 'test-ns',
                     type: 'test-type',
                     uid: 'test-uid',
@@ -79,13 +79,14 @@ describe('KnativeEventMeshProvider', () => {
                     apiVersion: 'backstage.io/v1alpha1',
                     kind: 'API',
                     metadata: {
-                        name: 'test-type',
+                        name: 'test-name',
                         namespace: 'test-ns',
+                        title: 'test-type - (test-ns/test-name)',
                         description: 'test-description',
                         annotations: {
                             "test-annotation": "test-annotation-value",
-                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test-ns/test",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test-ns/test",
+                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test-ns/test-name",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test-ns/test-name",
                         },
                         labels: {
                             "test-label": "test-label-value",
@@ -99,7 +100,6 @@ describe('KnativeEventMeshProvider', () => {
                             },
                         ],
                         uid: undefined,
-                        title: undefined,
                         etag: undefined,
                     },
                     spec: {

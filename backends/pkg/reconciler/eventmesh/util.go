@@ -13,6 +13,9 @@ func ObjNameAndNamespace(obj metav1.ObjectMetaAccessor) string {
 }
 
 func RefNameAndNamespace(ref *v1.KReference) string {
+	if ref == nil {
+		return ""
+	}
 	return NameAndNamespace(ref.Namespace, ref.Name)
 }
 
