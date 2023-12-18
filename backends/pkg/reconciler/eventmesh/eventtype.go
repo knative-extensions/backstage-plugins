@@ -14,6 +14,11 @@ type EventType struct {
 	SchemaURL   string            `json:"schemaURL,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+	Reference   string            `json:"reference,omitempty"`
+}
+
+func (et EventType) NameAndNamespace() string {
+	return NameAndNamespace(et.Namespace, et.Name)
 }
 
 func convertEventType(et *v1beta2.EventType) EventType {
@@ -28,5 +33,6 @@ func convertEventType(et *v1beta2.EventType) EventType {
 		SchemaURL:   et.Spec.Schema.String(),
 		Labels:      et.Labels,
 		Annotations: FilterAnnotations(et.Annotations),
+		Reference:   RefNameAndNamespace(et.Spec.Reference),
 	}
 }

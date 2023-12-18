@@ -221,7 +221,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
             apiVersion: 'backstage.io/v1alpha1',
             kind: 'API',
             metadata: {
-                name: eventType.type,
+                name: eventType.name,
                 namespace: eventType.namespace,
                 description: eventType.description,
                 // TODO: is there a value showing Kubernetes labels in Backstage?
@@ -231,6 +231,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 // we don't use tags
                 tags: [],
                 links: links,
+                title: `${eventType.type} - (${eventType.namespace}/${eventType.name})`
             },
             spec: {
                 type: 'eventType',
