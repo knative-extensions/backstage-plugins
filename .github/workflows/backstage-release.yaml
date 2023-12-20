@@ -1,13 +1,15 @@
-name: Backstage unit tests
+name: Publish release on NPM
 
 on:
-  pull_request:
-    branches:
-      - main
+  # When manually triggered
+  workflow_dispatch:
+  # When there's a release created
+  release:
+    types: [ published ]
 
 jobs:
-  unit-tests:
-    name: Test
+  publish-release-on-npm:
+    name: Publish release on NPM
     runs-on: ubuntu-latest
 
     steps:
@@ -38,3 +40,9 @@ jobs:
           export PATH="./node_modules/.bin/:$PATH"
           yarn test
 
+      - name: Publish knative-event-mesh-backend plugin
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+          package: backstage/plugins/knative-event-mesh-backend
