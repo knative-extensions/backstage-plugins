@@ -2,9 +2,10 @@ package eventmesh
 
 import (
 	"context"
-	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 	"net/http"
 	"sort"
+
+	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
