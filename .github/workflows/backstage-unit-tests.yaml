@@ -4,10 +4,9 @@ on:
   push:
     branches:
       - main
-
-concurrency:
-  group: push
-  cancel-in-progress: true
+  pull_request:
+    branches:
+      - main
 
 jobs:
   unit-tests:
