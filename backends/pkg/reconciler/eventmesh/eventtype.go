@@ -27,6 +27,6 @@ func convertEventType(et *v1beta2.EventType) EventType {
 		SchemaData:  et.Spec.SchemaData,
 		SchemaURL:   et.Spec.Schema.String(),
 		Labels:      et.Labels,
-		Annotations: filterAnnotations(et.Annotations),
+		Annotations: FilterAnnotations(et.Annotations),
 	}
 }

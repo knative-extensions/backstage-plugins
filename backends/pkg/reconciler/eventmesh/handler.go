@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"slices"
+	"sort"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,70 +33,88 @@ func EventMeshHandler(ctx context.Context, listers Listers) func(w http.Response
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
-		err, convertedBrokers := fetchBrokers(listers.BrokerLister, logger)
+		eventMesh, err := BuildEventMesh(listers, logger)
 		if err != nil {
-			logger.Errorw("Error fetching and converting brokers", "error", err)
+			logger.Errorw("Error building event mesh", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
-
-		brokerMap := make(map[string]*Broker)
-		for _, cbr := range convertedBrokers {
-			brokerMap[cbr.GetNameAndNamespace()] = cbr
-		}
-
-		fetchedEventTypes, err := listers.EventTypeLister.List(labels.Everything())
-		if err != nil {
-			logger.Errorw("Error listing eventTypes", "error", err)
-			return
-		}
-
-		logger.Debugw("Fetched event types", "event types", fetchedEventTypes)
-
-		convertedEventTypeMap := make(EventTypeMap)
-		for _, et := range fetchedEventTypes {
-			namespaceEventTypeRef := NamespaceEventTypeRef(et)
-
-			if et.Spec.Reference != nil {
-				if br, ok := brokerMap[RefNameAndNamespace(et.Spec.Reference)]; ok {
-					// add to broker provided event types
-					// only add if it hasn't been added already
-					if !slices.Contains(br.ProvidedEventTypes, namespaceEventTypeRef) {
-						br.ProvidedEventTypes = append(br.ProvidedEventTypes, namespaceEventTypeRef)
-					}
-				}
-			}
-
-			if _, ok := convertedEventTypeMap[namespaceEventTypeRef]; ok {
-				logger.Debugw("Duplicate event type", "event type", namespaceEventTypeRef)
-				continue
-			}
-
-			convertedEventType := convertEventType(et)
-			convertedEventTypeMap[namespaceEventTypeRef] = &convertedEventType
-		}
-
-		eventMesh := EventMesh{
-			EventTypes: make([]*EventType, 0, len(convertedEventTypeMap)),
-			Brokers:    convertedBrokers,
-		}
-
-		for _, et := range convertedEventTypeMap {
-			eventMesh.EventTypes = append(eventMesh.EventTypes, et)
 		}
 
 		err = json.NewEncoder(w).Encode(eventMesh)
 		if err != nil {
 			logger.Errorw("Error encoding event mesh", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
 }
 
-func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) (error, []*Broker) {
+func BuildEventMesh(listers Listers, logger *zap.SugaredLogger) (EventMesh, error) {
+	convertedBrokers, err := fetchBrokers(listers.BrokerLister, logger)
+	if err != nil {
+		logger.Errorw("Error fetching and converting brokers", "error", err)
+		return EventMesh{}, err
+	}
+
+	brokerMap := make(map[string]*Broker)
+	for _, cbr := range convertedBrokers {
+		brokerMap[cbr.GetNameAndNamespace()] = cbr
+	}
+
+	fetchedEventTypes, err := listers.EventTypeLister.List(labels.Everything())
+	if err != nil {
+		logger.Errorw("Error listing eventTypes", "error", err)
+		return EventMesh{}, err
+	}
+
+	sort.Slice(fetchedEventTypes, func(i, j int) bool {
+		if fetchedEventTypes[i].Namespace != fetchedEventTypes[j].Namespace {
+			return fetchedEventTypes[i].Namespace < fetchedEventTypes[j].Namespace
+		}
+		return fetchedEventTypes[i].Name < fetchedEventTypes[j].Name
+	})
+
+	logger.Debugw("Fetched event types", "event types", fetchedEventTypes)
+
+	convertedEventTypeMap := make(EventTypeMap)
+	for _, et := range fetchedEventTypes {
+		namespaceEventTypeRef := NamespaceEventTypeRef(et)
+
+		if et.Spec.Reference != nil {
+			if br, ok := brokerMap[RefNameAndNamespace(et.Spec.Reference)]; ok {
+				// add to broker provided event types
+				// only add if it hasn't been added already
+				if !slices.Contains(br.ProvidedEventTypes, namespaceEventTypeRef) {
+					br.ProvidedEventTypes = append(br.ProvidedEventTypes, namespaceEventTypeRef)
+				}
+			}
+		}
+
+		if _, ok := convertedEventTypeMap[namespaceEventTypeRef]; ok {
+			logger.Debugw("Duplicate event type", "event type", namespaceEventTypeRef)
+			continue
+		}
+
+		convertedEventType := convertEventType(et)
+		convertedEventTypeMap[namespaceEventTypeRef] = &convertedEventType
+	}
+
+	eventMesh := EventMesh{
+		EventTypes: make([]*EventType, 0, len(convertedEventTypeMap)),
+		Brokers:    convertedBrokers,
+	}
+
+	for _, et := range convertedEventTypeMap {
+		eventMesh.EventTypes = append(eventMesh.EventTypes, et)
+	}
+	return eventMesh, nil
+}
+
+func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) ([]*Broker, error) {
 	fetchedBrokers, err := brokerLister.List(labels.Everything())
 	if err != nil {
 		logger.Errorw("Error listing brokers", "error", err)
-		return err, nil
+		return nil, err
 	}
 
 	convertedBrokers := make([]*Broker, 0, len(fetchedBrokers))
@@ -103,7 +122,7 @@ func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.Sugar
 		convertedBroker := convertBroker(br)
 		convertedBrokers = append(convertedBrokers, &convertedBroker)
 	}
-	return err, convertedBrokers
+	return convertedBrokers, err
 }
 
 func NamespaceEventTypeRef(et *eventingb1beta2.EventType) string {

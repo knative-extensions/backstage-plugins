@@ -24,7 +24,7 @@ func convertBroker(br *eventingv1.Broker) Broker {
 		Namespace:   br.Namespace,
 		UID:         string(br.UID),
 		Labels:      br.Labels,
-		Annotations: filterAnnotations(br.Annotations),
+		Annotations: FilterAnnotations(br.Annotations),
 		// to be filled later
 		ProvidedEventTypes: []string{},
 	}
