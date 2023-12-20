@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: 'backstage/.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
+          cache: 'yarn'
 
       - name: Install dependencies
         shell: bash
@@ -28,4 +28,8 @@ jobs:
 
       - name: Run tests
         shell: bash
-        run: yarn test
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn test
+
