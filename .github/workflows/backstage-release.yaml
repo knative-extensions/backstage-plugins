@@ -33,12 +33,25 @@ jobs:
         working-directory: ./backstage
         run: yarn --prefer-offline --frozen-lockfile
 
+      - name: Install tooling
+        shell: bash
+        working-directory: ./backstage
+        run: npm install @backstage/cli -g
+
       - name: Run tests
         shell: bash
         working-directory: ./backstage
         run: |
           export PATH="./node_modules/.bin/:$PATH"
           yarn test
+
+      - name: Build
+        shell: bash
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn tsc
+          yarn build
 
       - name: Publish knative-event-mesh-backend plugin
         uses: JS-DevTools/npm-publish@v2
