@@ -28,6 +28,10 @@ jobs:
           node --version
           yarn --version
 
+      - name: Print release name
+        run: |
+          echo "Release name: ${{ github.event.release.name }}"
+
       - name: Install dependencies
         shell: bash
         working-directory: ./backstage
@@ -52,6 +56,13 @@ jobs:
           export PATH="./node_modules/.bin/:$PATH"
           yarn tsc
           yarn build
+
+      - name: Update version of knative-event-mesh-backend plugin
+        shell: bash
+        working-directory: ./backstage/plugins/knative-event-mesh-backend
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn version --new-version ${{ github.event.release.name }} --no-git-tag-version
 
       - name: Publish knative-event-mesh-backend plugin
         uses: JS-DevTools/npm-publish@v2
