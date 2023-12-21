@@ -1,0 +1,37 @@
+name: Backstage unit tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  unit-tests:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'backstage/.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: 'backstage/yarn.lock'
+
+      - name: Install dependencies
+        shell: bash
+        working-directory: ./backstage
+        run: yarn --prefer-offline --frozen-lockfile
+
+      - name: Run tests
+        shell: bash
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn test
+

@@ -1,10 +1,11 @@
 import {PluginTaskScheduler, TaskRunner} from '@backstage/backend-tasks';
 import {
-    ApiEntity,
-    Entity,
     ANNOTATION_LOCATION,
     ANNOTATION_ORIGIN_LOCATION,
-    EntityLink, ComponentEntity,
+    ApiEntity,
+    ComponentEntity,
+    Entity,
+    EntityLink,
 } from '@backstage/catalog-model';
 
 import {Config} from '@backstage/config';
@@ -15,7 +16,7 @@ import {Logger} from 'winston';
 import {readKnativeEventMeshProviderConfigs} from "./config";
 import {KnativeEventMeshProviderConfig} from "./types";
 
-type EventType = {
+export type EventType = {
     name:string;
     namespace:string;
     type:string;
@@ -27,7 +28,7 @@ type EventType = {
     annotations?:Record<string, string>;
 };
 
-type Broker = {
+export type Broker = {
     name:string;
     namespace:string;
     uid:string;
@@ -151,8 +152,22 @@ export class KnativeEventMeshProvider implements EntityProvider {
             throw new Error('Not initialized');
         }
 
-        const eventMesh = await getEventMesh(this.baseUrl);
+        const url = this.baseUrl;
 
+        const eventMesh = await getEventMesh(url);
+
+        const entities = this.buildEntities(eventMesh);
+
+        await this.connection.applyMutation({
+            type: 'full',
+            entities: entities.map(entity => ({
+                entity,
+                locationKey: this.getProviderName(),
+            })),
+        });
+    }
+
+    private buildEntities(eventMesh:EventMesh) {
         const entities:Entity[] = [];
 
         for (const eventType of eventMesh.eventTypes) {
@@ -164,17 +179,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
             const entity = this.buildBrokerEntity(broker);
             entities.push(entity);
         }
-
-        await this.connection.applyMutation({
-            type: 'full',
-            entities: entities.map(entity => ({
-                entity,
-                locationKey: this.getProviderName(),
-            })),
-        });
+        return entities;
     }
 
-    private buildEventTypeEntity(eventType:EventType):ApiEntity {
+    buildEventTypeEntity(eventType:EventType):ApiEntity {
         const annotations = eventType.annotations ?? {} as Record<string, string>;
         // TODO: no route exists yet
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}/eventtype/${eventType.namespace}/${eventType.name}`;
@@ -213,7 +221,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
             apiVersion: 'backstage.io/v1alpha1',
             kind: 'API',
             metadata: {
-                name: eventType.type,
+                name: eventType.name,
                 namespace: eventType.namespace,
                 description: eventType.description,
                 // TODO: is there a value showing Kubernetes labels in Backstage?
@@ -223,6 +231,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 // we don't use tags
                 tags: [],
                 links: links,
+                title: `${eventType.type} - (${eventType.namespace}/${eventType.name})`
             },
             spec: {
                 type: 'eventType',
@@ -239,7 +248,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
         };
     }
 
-    private buildBrokerEntity(broker:Broker): ComponentEntity {
+    buildBrokerEntity(broker:Broker):ComponentEntity {
         const annotations = broker.annotations ?? {} as Record<string, string>;
         // TODO: no route exists yet
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}/broker/${broker.namespace}/${broker.name}`;
