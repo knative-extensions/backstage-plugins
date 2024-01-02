@@ -3,6 +3,11 @@ name: Publish release on NPM
 on:
   # When manually triggered
   workflow_dispatch:
+    inputs:
+      releaseName:
+        description: 'Release name, e.g. v1.2.3'
+        required: true
+
   # When there's a release created
   release:
     types: [ published ]
@@ -13,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Setup release name
+        run: |
+          if [ -z "${{ github.event.release.name }}" ]; then
+            echo "RELEASE_NAME=${{ github.event.inputs.releaseName }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_NAME=${{ github.event.release.name }}" >> $GITHUB_ENV
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -30,7 +43,7 @@ jobs:
 
       - name: Print release name
         run: |
-          echo "Release name: ${{ github.event.release.name }}"
+          echo "Release name: ${RELEASE_NAME}"
 
       - name: Install dependencies
         shell: bash
@@ -62,7 +75,7 @@ jobs:
         working-directory: ./backstage/plugins/knative-event-mesh-backend
         run: |
           export PATH="./node_modules/.bin/:$PATH"
-          yarn version --new-version ${{ github.event.release.name }} --no-git-tag-version
+          yarn version --new-version ${RELEASE_NAME} --no-git-tag-version
 
       - name: Publish knative-event-mesh-backend plugin
         uses: JS-DevTools/npm-publish@v2
