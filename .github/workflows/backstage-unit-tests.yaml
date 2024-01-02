@@ -1,9 +1,6 @@
 name: Backstage unit tests
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -12,6 +9,7 @@ jobs:
   unit-tests:
     name: Test
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,6 +20,11 @@ jobs:
           node-version-file: 'backstage/.nvmrc'
           cache: 'yarn'
           cache-dependency-path: 'backstage/yarn.lock'
+
+      - name: Print environment
+        run: |
+          node --version
+          yarn --version
 
       - name: Install dependencies
         shell: bash
