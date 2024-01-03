@@ -50,18 +50,6 @@ spec:
           image: ko://knative.dev/backstage-plugins/backends/cmd/eventmesh
           imagePullPolicy: IfNotPresent
           env:
-            # TODO - necessary?
-            # - name: CONFIG_LEADERELECTION_NAME
-            #  value: config-kafka-leader-election
-            # TODO - necessary?
-            # - name: CONFIG_LOGGING_NAME
-            #  value: config-logging
-            # TODO - necessary?
-            #- name: CONFIG_OBSERVABILITY_NAME
-            #  value: config-observability
-            # TODO - necessary?
-            #- name: METRICS_DOMAIN
-            #  value: knative.dev/eventing
             - name: SYSTEM_NAMESPACE
               valueFrom:
                 fieldRef:
