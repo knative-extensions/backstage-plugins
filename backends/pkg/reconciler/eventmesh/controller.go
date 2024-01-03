@@ -59,7 +59,6 @@ func startWebServer(ctx context.Context, listers Listers) {
 	r.HandleFunc("/", EventMeshHandler(ctx, listers)).Methods("GET")
 	http.Handle("/", r)
 
-	// TODO: port
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 

@@ -184,8 +184,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
 
     buildEventTypeEntity(eventType:EventType):ApiEntity {
         const annotations = eventType.annotations ?? {} as Record<string, string>;
-        // TODO: no route exists yet
-        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}/eventtype/${eventType.namespace}/${eventType.name}`;
+        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
 
         const links:EntityLink[] = [];
         if (eventType.schemaURL) {
@@ -196,27 +195,6 @@ export class KnativeEventMeshProvider implements EntityProvider {
             });
         }
 
-        // TODO: remove?
-        // let relations:EntityRelation[] = [];
-        // if (eventType.provider) {
-        //     relations = [...relations, {
-        //         // type: RELATION_API_PROVIDED_BY,
-        //         type: 'apiProvidedBy',
-        //         // TODO: ref should point to the Backstage Broker provider
-        //         // targetRef: `${this.getProviderName()}:${eventType.provider.kind}:${eventType.provider.namespace}/${eventType.provider.name}`,
-        //         targetRef: `component:default/example-website`,
-        //     }];
-        //     console.log(relations);
-        //
-        //     // TODO:
-        //     // partOf: https://backstage.io/docs/features/software-catalog/well-known-relations/#partof-and-haspart
-        //     // - system?
-        //
-        //     // TODO:
-        //     // apiConsumedBy: https://backstage.io/docs/features/software-catalog/well-known-relations/#consumesapi-and-apiconsumedby
-        //     // - triggers?
-        // }
-
         return {
             apiVersion: 'backstage.io/v1alpha1',
             kind: 'API',
@@ -224,9 +202,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 name: eventType.name,
                 namespace: eventType.namespace,
                 description: eventType.description,
-                // TODO: is there a value showing Kubernetes labels in Backstage?
                 labels: eventType.labels || {} as Record<string, string>,
-                // TODO: is there a value showing Kubernetes annotations in Backstage?
                 annotations: annotations,
                 // we don't use tags
                 tags: [],
@@ -236,45 +212,32 @@ export class KnativeEventMeshProvider implements EntityProvider {
             spec: {
                 type: 'eventType',
                 lifecycle: this.env,
-                // TODO
                 system: 'knative-event-mesh',
-                // TODO
                 owner: 'knative',
                 definition: eventType.schemaData || "{}",
             },
-            // TODO: remove?
-            // Backstage doesn't like empty relations
-            // relations: relations.length > 0 ? relations : undefined,
         };
     }
 
     buildBrokerEntity(broker:Broker):ComponentEntity {
         const annotations = broker.annotations ?? {} as Record<string, string>;
-        // TODO: no route exists yet
-        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}/broker/${broker.namespace}/${broker.name}`;
+        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
 
         return {
             apiVersion: 'backstage.io/v1alpha1',
             kind: 'Component',
             metadata: {
-                // TODO: names are too generic: default/default
                 name: broker.name,
                 namespace: broker.namespace,
-                // TODO: is there a value showing Kubernetes labels in Backstage?
                 labels: broker.labels || {} as Record<string, string>,
-                // TODO: is there a value showing Kubernetes annotations in Backstage?
                 annotations: annotations,
                 // we don't use tags
                 tags: [],
-                // TODO: any links?
-                // links: links,
             },
             spec: {
                 type: 'broker',
                 lifecycle: this.env,
-                // TODO
                 system: 'knative-event-mesh',
-                // TODO
                 owner: 'knative',
                 providesApis: !broker.providedEventTypes ? [] : broker.providedEventTypes.map((eventType:string) => `api:${eventType}`),
             }

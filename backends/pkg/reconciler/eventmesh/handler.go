@@ -21,8 +21,6 @@ type EventMesh struct {
 	// not every event type is tied to a broker. thus, we need to send event types as well.
 	EventTypes []*EventType `json:"eventTypes"`
 	Brokers    []*Broker    `json:"brokers"`
-	// TODO: triggers
-	// Triggers   []Trigger   `json:"triggers"`
 }
 
 type EventTypeMap = map[string]*EventType
