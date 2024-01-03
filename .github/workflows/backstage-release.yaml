@@ -67,6 +67,7 @@ jobs:
         working-directory: ./backstage
         run: |
           export PATH="./node_modules/.bin/:$PATH"
+          yarn tsc
           yarn build:all
 
       - name: Update version of knative-event-mesh-backend plugin
