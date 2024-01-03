@@ -67,15 +67,15 @@ jobs:
         working-directory: ./backstage
         run: |
           export PATH="./node_modules/.bin/:$PATH"
-          yarn tsc
-          yarn build
+          yarn build:all
 
       - name: Update version of knative-event-mesh-backend plugin
         shell: bash
         working-directory: ./backstage/plugins/knative-event-mesh-backend
         run: |
           export PATH="./node_modules/.bin/:$PATH"
-          yarn version --new-version ${RELEASE_NAME} --no-git-tag-version
+          export RELEASE_VERSION="${RELEASE_NAME:1}"
+          yarn version --new-version ${RELEASE_VERSION} --no-git-tag-version
 
       - name: Publish knative-event-mesh-backend plugin
         uses: JS-DevTools/npm-publish@v2
