@@ -22,7 +22,6 @@ func (et EventType) NameAndNamespace() string {
 }
 
 func convertEventType(et *v1beta2.EventType) EventType {
-	// TODO: more information!
 	return EventType{
 		Name:        et.Name,
 		Namespace:   et.Namespace,
