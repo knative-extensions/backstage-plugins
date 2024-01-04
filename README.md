@@ -1,10 +1,12 @@
 # Knative Backstage Plugins
 
-TODO: Description
+This repository contains a set of Backstage plugins for Knative and their respective backends.
 
-## Setup
+## Installation and usage
 
-TODO: Setup instructions for using the plugins
+### Event Mesh plugin
+
+See [Event Mesh plugin README file](./backstage/plugins/knative-event-mesh-backend/README.md) for more information.
 
 ## Development
 

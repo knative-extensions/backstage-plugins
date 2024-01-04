@@ -40,8 +40,8 @@ describe('KnativeEventMeshProvider', () => {
                         title: 'test-type - (test-ns/test-name)',
                         description: undefined,
                         annotations: {
-                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test-ns/test-name",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test-ns/test-name",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
                         },
                         labels: {},
                         tags: [],
@@ -85,8 +85,8 @@ describe('KnativeEventMeshProvider', () => {
                         description: 'test-description',
                         annotations: {
                             "test-annotation": "test-annotation-value",
-                            "backstage.io/managed-by-location": "url:http://example.com/eventtype/test-ns/test-name",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/eventtype/test-ns/test-name",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
                         },
                         labels: {
                             "test-label": "test-label-value",
@@ -151,8 +151,8 @@ describe('KnativeEventMeshProvider', () => {
                         name: 'test',
                         namespace: 'test',
                         annotations: {
-                            "backstage.io/managed-by-location": "url:http://example.com/broker/test/test",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/broker/test/test",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
                         },
                         labels: {},
                         tags: [],
@@ -190,8 +190,8 @@ describe('KnativeEventMeshProvider', () => {
                         namespace: 'test-ns',
                         annotations: {
                             "test-annotation": "test-annotation-value",
-                            "backstage.io/managed-by-location": "url:http://example.com/broker/test-ns/test-broker",
-                            "backstage.io/managed-by-origin-location": "url:http://example.com/broker/test-ns/test-broker",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
                         },
                         labels: {
                             "test-label": "test-label-value",
