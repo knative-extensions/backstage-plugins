@@ -67,6 +67,8 @@ aliases:
   - spolti
   - vaibhavjainwiz
   eventing-natss-approvers:
+  - astelmashenko
+  - dan-j
   - zhaojizhuang
   eventing-prometheus-approvers:
   - lberk
@@ -77,6 +79,7 @@ aliases:
   - chunyilyu
   - dolfolife
   - gabo1208
+  - ikvmw
   - joeeltgroth
   - salaboy
   - xtreme-sameer-vohra
@@ -167,6 +170,7 @@ aliases:
   - rhuss
   knative-admin:
   - Cali0707
+  - Leo6Leo
   - ReToCode
   - aliok
   - creydr
@@ -189,6 +193,7 @@ aliases:
   - upodroid
   knative-release-leads:
   - Cali0707
+  - Leo6Leo
   - ReToCode
   - creydr
   - dsimansk
