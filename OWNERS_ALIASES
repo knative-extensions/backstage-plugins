@@ -18,7 +18,6 @@ aliases:
   - snneji
   docs-writers:
   - csantanapr
-  - nak3
   - retocode
   - skonto
   - snneji
@@ -74,12 +73,8 @@ aliases:
   - lberk
   - matzew
   eventing-rabbitmq-approvers:
-  - andrew-su
-  - chunyilyu
   - gabo1208
-  - joeeltgroth
-  - salaboy
-  - xtreme-sameer-vohra
+  - tcnghia
   eventing-redis-approvers:
   - aavarghese
   - lionelvillard
@@ -208,13 +203,10 @@ aliases:
   - dprotaso
   net-gateway-api-approvers:
   - dprotaso
-  - nak3
   net-http01-approvers: []
   net-istio-approvers:
-  - nak3
   - skonto
   net-kourier-approvers:
-  - nak3
   - skonto
   networking-wg-leads: []
   operations-wg-leads:
@@ -245,7 +237,6 @@ aliases:
   - davidhadas
   - evankanderson
   serving-approvers:
-  - nak3
   - psschwei
   - skonto
   serving-progressive-rollout-approvers:
@@ -255,7 +246,6 @@ aliases:
   - yuzisun
   serving-reviewers:
   - KauzClay
-  - jsanin-vmw
   - krsna-m
   - retocode
   - skonto
@@ -267,7 +257,6 @@ aliases:
   - dprotaso
   serving-writers:
   - dprotaso
-  - nak3
   - psschwei
   - skonto
   steering-committee:
