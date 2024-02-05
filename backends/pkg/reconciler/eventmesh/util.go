@@ -22,3 +22,18 @@ func RefNameAndNamespace(ref *v1.KReference) string {
 func NameAndNamespace(namespace, name string) string {
 	return fmt.Sprintf("%s/%s", namespace, name)
 }
+
+func Deduplicate(arr []string) []string {
+	m := make(map[string]bool)
+	for _, v := range arr {
+		m[v] = true
+	}
+
+	// create a new slice and add the keys to it
+	var result []string
+	for key := range m {
+		result = append(result, key)
+	}
+
+	return result
+}

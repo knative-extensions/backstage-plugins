@@ -25,6 +25,7 @@ rules:
     resources:
       - brokers
       - eventtypes
+      - triggers
     verbs:
       - get
       - list
@@ -43,3 +44,14 @@ rules:
       - delete
       - patch
       - watch
+
+
+  # permissions to get subscribers for triggers
+  # as subscribers can be any resource, we need to give access to all resources
+  # we fetch subscribers one by one, we only need `get` verb
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get

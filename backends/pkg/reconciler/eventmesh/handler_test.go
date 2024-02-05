@@ -185,7 +185,7 @@ func TestBuildEventMesh(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildEventMesh(listers, logger)
+			got, err := BuildEventMesh(nil, listers, logger)
 			if (err != nil) != tt.error {
 				t.Errorf("BuildEventMesh() error = %v, error %v", err, tt.error)
 				return
