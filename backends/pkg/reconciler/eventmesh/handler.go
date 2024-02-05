@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"knative.dev/pkg/injection/clients/dynamicclient"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -99,7 +101,7 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 		etNameMap[et.NameAndNamespace()] = et
 	}
 
-	subscriptionMap, err := buildSubscriptions(ctx, listers.DynamicClient, listers.TriggerLister, brokerMap, etNameMap, logger)
+	subscriptionMap, err := buildSubscriptions(ctx, listers.TriggerLister, brokerMap, etNameMap, logger)
 	if err != nil {
 		logger.Errorw("Error building subscriptions", "error", err)
 		return EventMesh{}, err
@@ -160,9 +162,11 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 	return convertedEventTypes, err
 }
 
-func buildSubscriptions(ctx context.Context, dynamicClient dynamic.Interface, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
+func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
 	// map key: "<namespace>/<eventType.spec.type>"
 	subscriptionMap := make(SubscriptionMap)
+
+	dynamicClient := dynamicclient.Get(ctx)
 
 	triggers, err := triggerLister.List(labels.Everything())
 	if err != nil {

@@ -1,12 +1,14 @@
 package eventmesh
 
 import (
+	"context"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic/fake"
+	"knative.dev/pkg/injection/clients/dynamicclient"
 
 	"github.com/google/go-cmp/cmp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"knative.dev/pkg/apis"
@@ -230,16 +232,19 @@ func TestBuildEventMesh(t *testing.T) {
 		sc := runtime.NewScheme()
 		_ = corev1.AddToScheme(sc)
 
+		fakeDynamicClient := fake.NewSimpleDynamicClient(sc, tt.extraObjects...)
+
+		ctx := context.TODO()
+		ctx = context.WithValue(ctx, dynamicclient.Key{}, fakeDynamicClient)
+
 		listers := Listers{
 			BrokerLister:    fakelistersv1.GetBrokerLister(),
 			EventTypeLister: fakelistersv1beta2.GetEventTypeLister(),
 			TriggerLister:   fakelistersv1.GetTriggerLister(),
-			// TODO: move this into context
-			DynamicClient: fake.NewSimpleDynamicClient(sc, tt.extraObjects...),
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildEventMesh(nil, listers, logger)
+			got, err := BuildEventMesh(ctx, listers, logger)
 			if (err != nil) != tt.error {
 				t.Errorf("BuildEventMesh() error = %v, error %v", err, tt.error)
 				return
