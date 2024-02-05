@@ -15,10 +15,15 @@ type EventType struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Reference   string            `json:"reference,omitempty"`
+	ConsumedBy  []string          `json:"consumedBy,omitempty"`
 }
 
 func (et EventType) NameAndNamespace() string {
 	return NameAndNamespace(et.Namespace, et.Name)
+}
+
+func (et EventType) NamespaceAndType() string {
+	return NameAndNamespace(et.Namespace, et.Type)
 }
 
 func convertEventType(et *v1beta2.EventType) EventType {
@@ -33,5 +38,6 @@ func convertEventType(et *v1beta2.EventType) EventType {
 		Labels:      et.Labels,
 		Annotations: FilterAnnotations(et.Annotations),
 		Reference:   RefNameAndNamespace(et.Spec.Reference),
+		ConsumedBy:  make([]string, 0),
 	}
 }
