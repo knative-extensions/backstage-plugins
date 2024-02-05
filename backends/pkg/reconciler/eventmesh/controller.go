@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"k8s.io/client-go/dynamic"
+
 	"github.com/gorilla/mux"
 
 	"knative.dev/pkg/controller"
@@ -18,12 +20,15 @@ import (
 
 	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
 	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
+
+	"knative.dev/pkg/injection/clients/dynamicclient"
 )
 
 type Listers struct {
 	EventTypeLister eventinglistersv1beta2.EventTypeLister
 	BrokerLister    eventinglistersv1.BrokerLister
 	TriggerLister   eventinglistersv1.TriggerLister
+	DynamicClient   dynamic.Interface
 }
 
 func NewController(ctx context.Context) *controller.Impl {
@@ -43,6 +48,7 @@ func NewController(ctx context.Context) *controller.Impl {
 		EventTypeLister: eventtypeinformer.Get(ctx).Lister(),
 		BrokerLister:    brokerinformer.Get(ctx).Lister(),
 		TriggerLister:   triggerinformer.Get(ctx).Lister(),
+		DynamicClient:   dynamicclient.Get(ctx),
 	}
 
 	go startWebServer(ctx, listers)

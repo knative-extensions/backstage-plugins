@@ -2,14 +2,16 @@ package eventmesh
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
-	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 	"net/http"
 	"sort"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
+	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
@@ -19,8 +21,6 @@ import (
 	"knative.dev/pkg/logging"
 
 	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
-
-	dynamicclient "knative.dev/pkg/injection/clients/dynamicclient"
 )
 
 type EventMesh struct {
@@ -99,7 +99,7 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 		etNameMap[et.NameAndNamespace()] = et
 	}
 
-	subscriptionMap, err := buildSubscriptions(ctx, listers.TriggerLister, brokerMap, etNameMap, logger)
+	subscriptionMap, err := buildSubscriptions(ctx, listers.DynamicClient, listers.TriggerLister, brokerMap, etNameMap, logger)
 	if err != nil {
 		logger.Errorw("Error building subscriptions", "error", err)
 		return EventMesh{}, err
@@ -160,7 +160,7 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 	return convertedEventTypes, err
 }
 
-func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
+func buildSubscriptions(ctx context.Context, dynamicClient dynamic.Interface, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
 	// map key: "<namespace>/<eventType.spec.type>"
 	subscriptionMap := make(SubscriptionMap)
 
@@ -185,7 +185,7 @@ func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.Tri
 			return nil, nil
 		}
 
-		subscriberBackstageId, err := getSubscriberBackstageId(ctx, trigger, logger)
+		subscriberBackstageId, err := getSubscriberBackstageId(ctx, dynamicClient, trigger, logger)
 		if err != nil {
 			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
 			// there are no permissions to get a single subscriber resource
@@ -221,9 +221,12 @@ func buildSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etNa
 	if trigger.Spec.Filter != nil && len(trigger.Spec.Filter.Attributes) > 0 {
 		// check if "type" attribute is present
 		if subscribedEventType, ok := trigger.Spec.Filter.Attributes["type"]; ok {
-			// if type is present, that means the trigger is subscribed to a specific event type
-			// get that event type
-			return []string{subscribedEventType}
+			// it can be present but empty
+			// in that case, we assume the trigger is subscribed to all event types
+			if subscribedEventType != eventingv1.TriggerAnyFilter {
+				// if type is present and not empty, that means the trigger is subscribed to a specific event type
+				return []string{subscribedEventType}
+			}
 		}
 	}
 
@@ -238,9 +241,7 @@ func buildSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etNa
 	return subscribedEventTypes
 }
 
-func getSubscriberBackstageId(ctx context.Context, trigger *eventingv1.Trigger, logger *zap.SugaredLogger) (string, error) {
-	client := dynamicclient.Get(ctx)
-
+func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, trigger *eventingv1.Trigger, logger *zap.SugaredLogger) (string, error) {
 	refGvr := schema.GroupVersionResource{
 		Group:   trigger.Spec.Subscriber.Ref.Group,
 		Version: trigger.Spec.Subscriber.Ref.APIVersion,
