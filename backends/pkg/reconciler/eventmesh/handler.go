@@ -40,11 +40,11 @@ type EventMesh struct {
 	Brokers []*Broker `json:"brokers"`
 }
 
-// BackstageLabel is the label that's used to identify Backstage resources.
+// BackstageKubernetesIDLabel is the label that's used to identify Backstage resources.
 // In Backstage Kubernetes plugin, a Backstage entity (e.g. a service) is tied to a Kubernetes resource
 // using this label.
 // see Backstage Kubernetes plugin for more details.
-const BackstageLabel = "backstage.io/kubernetes-id"
+const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
 
 // HttpHandler is the HTTP handler that's used to serve the event mesh data.
 func HttpHandler(ctx context.Context, listers Listers) func(w http.ResponseWriter, req *http.Request) {
@@ -146,6 +146,7 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) error {
 	// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
 	if trigger.Spec.Subscriber.Ref == nil {
+		logger.Debugw("Trigger has no subscriber ref; cannot process this trigger", "namespace", trigger.Namespace, "trigger", trigger.Name)
 		return nil
 	}
 
@@ -158,19 +159,23 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 
 	// we only care about subscribers that are in Backstage
 	if len(subscriberBackstageId) == 0 {
+		logger.Debugw("Subscriber has no backstage id", "namespace", trigger.Namespace, "trigger", trigger.Name)
 		return nil
 	}
 
 	// if the trigger's broker is not set or if we haven't processed the broker, we can skip the trigger
 	if trigger.Spec.Broker == "" {
+		logger.Errorw("Trigger has no broker", "namespace", trigger.Namespace, "trigger", trigger.Name)
 		return nil
 	}
 	brokerRef := NamespacedName(trigger.Namespace, trigger.Spec.Broker)
 	if _, ok := brokerMap[brokerRef]; !ok {
+		logger.Infow("Broker not found", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", trigger.Spec.Broker)
 		return nil
 	}
 
 	eventTypes := collectSubscribedEventTypes(trigger, brokerMap[brokerRef], etByNamespacedName, logger)
+	logger.Debugw("Collected subscribed event types", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", trigger.Spec.Broker, "eventTypes", eventTypes)
 
 	for _, eventType := range eventTypes {
 		eventType.ConsumedBy = append(eventType.ConsumedBy, subscriberBackstageId)
@@ -270,11 +275,7 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 
 // getSubscriberBackstageId fetches the subscriber resource and returns the Backstage ID if it's present.
 func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, subRef *duckv1.KReference, logger *zap.SugaredLogger) (string, error) {
-	refGvr, _ := meta.UnsafeGuessKindToResource(schema.GroupVersionKind{
-		subRef.Group,
-		subRef.APIVersion,
-		subRef.Kind,
-	})
+	refGvr, _ := meta.UnsafeGuessKindToResource(schema.FromAPIVersionAndKind(subRef.APIVersion, subRef.Kind))
 
 	resource, err := client.Resource(refGvr).Namespace(subRef.Namespace).Get(ctx, subRef.Name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
@@ -287,5 +288,8 @@ func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, sub
 	}
 
 	// check if the resource has the Backstage label
-	return resource.GetLabels()[BackstageLabel], nil
+	if backstageId, ok := resource.GetLabels()[BackstageKubernetesIDLabel]; ok {
+		return backstageId, nil
+	}
+	return "", nil
 }
