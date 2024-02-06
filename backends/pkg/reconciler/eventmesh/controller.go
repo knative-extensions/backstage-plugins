@@ -59,7 +59,7 @@ func startWebServer(ctx context.Context, listers Listers) {
 	r := mux.NewRouter()
 	r.Use(commonMiddleware)
 
-	r.HandleFunc("/", EventMeshHandler(ctx, listers)).Methods("GET")
+	r.HandleFunc("/", HttpHandler(ctx, listers)).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", r))

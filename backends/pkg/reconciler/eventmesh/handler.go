@@ -25,24 +25,38 @@ import (
 	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
 )
 
+// EventMesh is the top-level struct that holds the event mesh data.
+// It's the struct that's serialized and sent to the Backstage plugin.
 type EventMesh struct {
-	// not every event type is tied to a broker. thus, we need to send event types as well.
+	// EventTypes is a list of all event types in the cluster.
+	// While we can embed the event types in the brokers, we keep them separate because
+	// not every event type is tied to a broker.
 	EventTypes []*EventType `json:"eventTypes"`
-	Brokers    []*Broker    `json:"brokers"`
+
+	// Brokers is a list of all brokers in the cluster.
+	Brokers []*Broker `json:"brokers"`
 }
 
+// Subscription is a set of Backstage IDs that are subscribed to a specific event type.
 type Subscription struct {
 	BackstageIds map[string]struct{}
 }
 
-// SubscriptionMap key: "<namespace>/<eventType.spec.type>"
+// SubscriptionMap is a map of subscriptions that's created interim to build the EventMesh.
+// key: "<namespace>/<eventType.spec.type>"
 type SubscriptionMap map[string]Subscription
 
+// BackstageLabel is the label that's used to identify Backstage resources.
+// In Backstage Kubernetes plugin, a Backstage entity (e.g. a service) is tied to a Kubernetes resource
+// using this label.
+// see Backstage Kubernetes plugin for more details.
 const BackstageLabel = "backstage.io/kubernetes-id"
 
-func EventMeshHandler(ctx context.Context, listers Listers) func(w http.ResponseWriter, req *http.Request) {
+// HttpHandler is the HTTP handler that's used to serve the event mesh data.
+func HttpHandler(ctx context.Context, listers Listers) func(w http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(ctx)
 
+	// this handler simply calls the event mesh builder and returns the result as JSON
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
@@ -62,25 +76,36 @@ func EventMeshHandler(ctx context.Context, listers Listers) func(w http.Response
 	}
 }
 
+// BuildEventMesh builds the event mesh data by fetching and converting the Kubernetes resources.
+// The procedure is as follows:
+// - Fetch the brokers and convert them to the representation that's consumed by the Backstage plugin.
+// - Do the same for event types.
+// - Fetch the triggers, find out what event types they're subscribed to and find out the resources that are receiving the events.
+// - Make a connection between the event types and the subscribers. Store this connection in the eventType struct.
 func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLogger) (EventMesh, error) {
+	// fetch the brokers and convert them to the representation that's consumed by the Backstage plugin.
 	convertedBrokers, err := fetchBrokers(listers.BrokerLister, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting brokers", "error", err)
 		return EventMesh{}, err
 	}
 
+	// build a map for easier access.
+	// we need this map to register the event types in the brokers when we are processing the event types.
 	// map key: "<namespace>/<name>"
 	brokerMap := make(map[string]*Broker)
 	for _, cbr := range convertedBrokers {
 		brokerMap[cbr.GetNameAndNamespace()] = cbr
 	}
 
+	// fetch the event types and convert them to the representation that's consumed by the Backstage plugin.
 	convertedEventTypes, err := fetchEventTypes(listers.EventTypeLister, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting event types", "error", err)
 		return EventMesh{}, err
 	}
 
+	// register the event types in the brokers
 	for _, et := range convertedEventTypes {
 		if et.Reference != "" {
 			if br, ok := brokerMap[et.Reference]; ok {
