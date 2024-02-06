@@ -2,9 +2,12 @@ package eventmesh
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/meta"
+	"fmt"
 	"net/http"
 	"sort"
+
+	"k8s.io/apimachinery/pkg/api/meta"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 
 	"knative.dev/pkg/injection/clients/dynamicclient"
 
@@ -36,15 +39,6 @@ type EventMesh struct {
 	// Brokers is a list of all brokers in the cluster.
 	Brokers []*Broker `json:"brokers"`
 }
-
-// Subscription is a set of Backstage IDs that are subscribed to a specific event type.
-type Subscription struct {
-	BackstageIds map[string]struct{}
-}
-
-// SubscriptionMap is a map of subscriptions that's created interim to build the EventMesh.
-// key: "<namespace>/<eventType.spec.type>"
-type SubscriptionMap map[string]Subscription
 
 // BackstageLabel is the label that's used to identify Backstage resources.
 // In Backstage Kubernetes plugin, a Backstage entity (e.g. a service) is tied to a Kubernetes resource
@@ -114,30 +108,25 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 		}
 	}
 
-	// build 2 maps for event types for easier access
-
-	// map key: "<namespace>/<eventType.spec.type>"
-	etTypeMap := make(map[string]*EventType)
-	// map key: "<namespace>/<eventType.name>"
-	etByNamespacedName := make(map[string]*EventType)
-
-	for _, et := range convertedEventTypes {
-		etTypeMap[et.NamespaceAndType()] = et
-		etByNamespacedName[et.NameAndNamespace()] = et
-	}
-
-	subscriptionMap, err := buildSubscriptions(ctx, listers.TriggerLister, brokerMap, etByNamespacedName, logger)
+	triggers, err := listers.TriggerLister.List(labels.Everything())
 	if err != nil {
-		logger.Errorw("Error building subscriptions", "error", err)
+		logger.Errorw("Error listing triggers", "error", err)
 		return EventMesh{}, err
 	}
 
-	for key, sub := range *subscriptionMap {
-		for backstageId := range sub.BackstageIds {
-			// find the event type and add the subscriber to the ConsumedBy list
-			if et, ok := etTypeMap[key]; ok {
-				et.ConsumedBy = append(et.ConsumedBy, backstageId)
-			}
+	// TODO: docs
+	// map key: "<namespace>/<eventType.name>"
+	etByNamespacedName := make(map[string]*EventType)
+	for _, et := range convertedEventTypes {
+		etByNamespacedName[et.NameAndNamespace()] = et
+	}
+
+	for _, trigger := range triggers {
+		err := processTrigger(ctx, trigger, brokerMap, etByNamespacedName, logger)
+		if err != nil {
+			logger.Errorw("Error processing trigger", "error", err)
+			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
+			// there are no permissions to get a single subscriber resource
 		}
 	}
 
@@ -147,6 +136,87 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	}
 
 	return eventMesh, nil
+}
+
+func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) error {
+	// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
+	if trigger.Spec.Subscriber.Ref == nil {
+		return nil
+	}
+
+	dynamicClient := dynamicclient.Get(ctx)
+	subscriberBackstageId, err := getSubscriberBackstageId(ctx, dynamicClient, trigger.Spec.Subscriber.Ref, logger)
+	if err != nil {
+		// wrap the error to provide more context
+		return fmt.Errorf("error getting subscriber backstage id: %w", err)
+	}
+
+	// we only care about subscribers that are in Backstage
+	if len(subscriberBackstageId) == 0 {
+		return nil
+	}
+
+	// if the trigger's broker is not set or if we haven't processed the broker, we can skip the trigger
+	if trigger.Spec.Broker == "" {
+		return nil
+	}
+	brokerRef := NameAndNamespace(trigger.Namespace, trigger.Spec.Broker)
+	if _, ok := brokerMap[brokerRef]; !ok {
+		return nil
+	}
+
+	eventTypes := collectSubscribedEventTypes(trigger, brokerMap[brokerRef], etByNamespacedName, logger)
+
+	for _, eventType := range eventTypes {
+		eventType.ConsumedBy = append(eventType.ConsumedBy, subscriberBackstageId)
+	}
+
+	return nil
+}
+
+func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) []*EventType {
+	logger.Debugw("Collecting subscribed event types", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name)
+
+	// TODO: we don't handle the CESQL yet
+	if trigger.Spec.Filter != nil && len(trigger.Spec.Filter.Attributes) > 0 {
+		logger.Debugw("Trigger has filter", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name, "filter", trigger.Spec.Filter.Attributes)
+
+		// check if "type" attribute is present
+		if subscribedEventType, ok := trigger.Spec.Filter.Attributes["type"]; ok {
+			logger.Debugw("Trigger has type filter", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name, "type", subscribedEventType)
+
+			// it can be present but empty
+			// in that case, we assume the trigger is subscribed to all event types
+			if subscribedEventType != eventingv1.TriggerAnyFilter {
+				logger.Debugw("Trigger has non-empty type filter", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name, "type", subscribedEventType)
+
+				// if type is present and not empty, that means the trigger is subscribed to a ETs of that type
+				// find the ETs for that type
+				subscribedEventTypes := make([]*EventType, 0)
+				for _, etNamespacedName := range broker.ProvidedEventTypes {
+					if et, ok := etByNamespacedName[etNamespacedName]; ok {
+						if et.Type == subscribedEventType {
+							subscribedEventTypes = append(subscribedEventTypes, et)
+						}
+					}
+				}
+				logger.Debugw("Found subscribed event types", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name, "subscribedEventTypes", subscribedEventTypes)
+				return subscribedEventTypes
+			}
+		}
+	}
+
+	logger.Debugw("Trigger has no filter or type, returning all event types the broker provides", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name)
+	// if no filter or type is specified, we assume the resource is interested in all event types that the broker provides
+	subscribedEventTypes := make([]*EventType, 0, len(broker.ProvidedEventTypes))
+	for _, eventType := range broker.ProvidedEventTypes {
+		if et, ok := etByNamespacedName[eventType]; ok {
+			subscribedEventTypes = append(subscribedEventTypes, et)
+		}
+	}
+
+	logger.Debugw("Found event types", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name, "eventTypes", subscribedEventTypes)
+	return subscribedEventTypes
 }
 
 func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) ([]*Broker, error) {
@@ -187,99 +257,16 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 	return convertedEventTypes, err
 }
 
-func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
-	// map key: "<namespace>/<eventType.spec.type>"
-	subscriptionMap := make(SubscriptionMap)
-
-	dynamicClient := dynamicclient.Get(ctx)
-
-	triggers, err := triggerLister.List(labels.Everything())
-	if err != nil {
-		logger.Errorw("Error listing triggers", "error", err)
-		return &subscriptionMap, err
-	}
-
-	for _, trigger := range triggers {
-		// if the trigger's broker is not set or if we haven't processed the broker, we can skip the trigger
-		if trigger.Spec.Broker == "" {
-			continue
-		}
-		brokerRef := NameAndNamespace(trigger.Namespace, trigger.Spec.Broker)
-		if _, ok := brokerMap[brokerRef]; !ok {
-			continue
-		}
-
-		// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
-		if trigger.Spec.Subscriber.Ref == nil {
-			continue
-		}
-
-		subscriberBackstageId, err := getSubscriberBackstageId(ctx, dynamicClient, trigger, logger)
-		if err != nil {
-			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
-			// there are no permissions to get a single subscriber resource
-			continue
-		}
-
-		// we only care about subscribers that are in Backstage
-		if len(subscriberBackstageId) == 0 {
-			continue
-		}
-
-		// build the list of event types that the subscriber is subscribed to
-		subscribedEventTypes := buildSubscribedEventTypes(trigger, brokerMap[brokerRef], etByNamespacedName, logger)
-
-		// go over the event types and add the subscriber to the subscription map
-		for _, eventType := range subscribedEventTypes {
-			key := NameAndNamespace(trigger.Namespace, eventType)
-			if _, ok := subscriptionMap[key]; !ok {
-				subscriptionMap[key] = Subscription{
-					BackstageIds: make(map[string]struct{}),
-				}
-			}
-			subscriptionMap[key].BackstageIds[subscriberBackstageId] = struct{}{}
-		}
-
-	}
-
-	return &subscriptionMap, nil
-}
-
-func buildSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) []string {
-	// TODO: we don't handle the CESQL yet
-	if trigger.Spec.Filter != nil && len(trigger.Spec.Filter.Attributes) > 0 {
-		// check if "type" attribute is present
-		if subscribedEventType, ok := trigger.Spec.Filter.Attributes["type"]; ok {
-			// it can be present but empty
-			// in that case, we assume the trigger is subscribed to all event types
-			if subscribedEventType != eventingv1.TriggerAnyFilter {
-				// if type is present and not empty, that means the trigger is subscribed to a specific event type
-				return []string{subscribedEventType}
-			}
-		}
-	}
-
-	// if no filter or type is specified, we assume the resource is interested in all event types that the broker provides
-	subscribedEventTypes := make([]string, 0, len(broker.ProvidedEventTypes))
-	for _, eventType := range broker.ProvidedEventTypes {
-		if et, ok := etNameMap[eventType]; ok {
-			subscribedEventTypes = append(subscribedEventTypes, et.Type)
-		}
-	}
-
-	return subscribedEventTypes
-}
-
-func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, trigger *eventingv1.Trigger, logger *zap.SugaredLogger) (string, error) {
+func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, subRef *duckv1.KReference, logger *zap.SugaredLogger) (string, error) {
 	refGvr, _ := meta.UnsafeGuessKindToResource(schema.GroupVersionKind{
-		trigger.Spec.Subscriber.Ref.Group,
-		trigger.Spec.Subscriber.Ref.APIVersion,
-		trigger.Spec.Subscriber.Ref.Kind,
+		subRef.Group,
+		subRef.APIVersion,
+		subRef.Kind,
 	})
 
-	resource, err := client.Resource(refGvr).Namespace(trigger.Spec.Subscriber.Ref.Namespace).Get(ctx, trigger.Spec.Subscriber.Ref.Name, metav1.GetOptions{})
+	resource, err := client.Resource(refGvr).Namespace(subRef.Namespace).Get(ctx, subRef.Name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		logger.Debugw("Subscriber resource not found", "resource", trigger.Spec.Subscriber.Ref.Name)
+		logger.Debugw("Subscriber resource not found", "resource", subRef.Name)
 		return "", nil
 	}
 	if err != nil {
