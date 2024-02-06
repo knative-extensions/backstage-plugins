@@ -2,9 +2,9 @@ package eventmesh
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"net/http"
 	"sort"
-	"strings"
 
 	"knative.dev/pkg/injection/clients/dynamicclient"
 
@@ -246,12 +246,11 @@ func buildSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etNa
 }
 
 func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, trigger *eventingv1.Trigger, logger *zap.SugaredLogger) (string, error) {
-	refGvr := schema.GroupVersionResource{
-		Group:   trigger.Spec.Subscriber.Ref.Group,
-		Version: trigger.Spec.Subscriber.Ref.APIVersion,
-		// TODO: couldn't remember the elegant way to do this
-		Resource: strings.ToLower(trigger.Spec.Subscriber.Ref.Kind) + "s",
-	}
+	refGvr, _ := meta.UnsafeGuessKindToResource(schema.GroupVersionKind{
+		trigger.Spec.Subscriber.Ref.Group,
+		trigger.Spec.Subscriber.Ref.APIVersion,
+		trigger.Spec.Subscriber.Ref.Kind,
+	})
 
 	resource, err := client.Resource(refGvr).Namespace(trigger.Spec.Subscriber.Ref.Namespace).Get(ctx, trigger.Spec.Subscriber.Ref.Name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
