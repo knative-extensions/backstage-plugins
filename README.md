@@ -14,29 +14,130 @@ See [Event Mesh plugin README file](./backstage/plugins/knative-event-mesh-backe
 
 The architecture of the plugin is as follows:
 ```
-      Kubernetes                        Backstage
-┌────────────────────┐           ┌─────────────────────┐
-│                    │           │                     │
-│ ┌───────────────┐  │           │       Plugin        │
-│ │               │  │           │ ┌─────────────────┐ │
-│ │    Backend    ◄──┼────┐      │ │                 │ │
-│ │               │  │    │      │ │ ┌─────────────┐ │ │
-│ └───────┬───────┘  │    │      │ │ │             │ │ │
-│         │          │    └──────┼─┼─┤  Provider   │ │ │
-│         │          │           │ │ │             │ │ │
-│         │          │           │ │ └─────────────┘ │ │
-│ ┌───────▼───────┐  │           │ │                 │ │
-│ │               │  │           │ └─────────────────┘ │
-│ │   API Server  │  │           │                     │
-│ │               │  │           └─────────────────────┘
-│ └───────────────┘  │
-│                    │
-└────────────────────┘
+      
+      Kubernetes                                     Backstage
+┌────────────────────┐           ┌───────────────────────────────────────────────┐
+│                    │           │       Plugin                                  │
+│ ┌───────────────┐  │           │ ┌─────────────────┐        ┌───────────────┐  │
+│ │               │  │           │ │                 │        │               │  │
+│ │    Backend    ◄──┼────┐      │ │ ┌─────────────┐ │        │               │  │
+│ │               │  │    │      │ │ │             │ │        │               │  │
+│ └───────┬───────┘  │    └──────┼─┼─┤  Provider   ├─┼────────►               │  │
+│         │          │           │ │ │             │ │        │               │  │
+│         │          │           │ │ └─────────────┘ │        │               │  │
+│         │          │           │ │                 │        │               │  │
+│ ┌───────▼───────┐  │           │ │                 │        │               │  │
+│ │               │  │           │ │        ┌────────┼────────┤   Catalog     │  │
+│ │   API Server  │  │           │ │        │        │        │               │  │
+│ │               │  │           │ │        │        │        │               │  │
+│ └───────────────┘  │           │ │ ┌──────▼──────┐ │        │               │  │
+│                    │           │ │ │             │ │        │               │  │
+└────────────────────┘           │ │ │ Processor   ├─┼────────►               │  │
+                                 │ │ │             │ │        │               │  │
+                                 │ │ └─────────────┘ │        │               │  │
+                                 │ │                 │        │               │  │
+                                 │ └─────────────────┘        └───────────────┘  │
+                                 └───────────────────────────────────────────────┘
 ```
 
 The plugin use providers (and possibly other mechanisms) to communicate with a special backend-for-frontend.
 
 This backend talks to the Kubernetes API server to get information about the resources in the cluster.
+
+```mermaid
+---
+title: Overall
+---
+flowchart TD
+    Start --> FetchBrokers
+    FetchBrokers --> ProcessBrokers
+    ProcessBrokers --> FetchEventTypes
+    FetchEventTypes --> ProcessEventTypes
+    ProcessEventTypes --> FetchTriggers
+    FetchTriggers --> ProcessTriggers
+```
+
+## Processing the brokers
+
+```mermaid
+---
+title: ProcessBrokers
+---
+flowchart LR
+    GetNextBroker --> CreateDTO
+```
+
+## Processing the event types
+
+```mermaid
+---
+title: ProcessEventTypes
+---
+flowchart TD
+    GetEventType[Get next event type]
+    CheckRef{spec.ref exists?}
+    RefIsABrokerInTheBrokerMap{ref is a broker in the previously <br> built broker map?}
+    RegisterEventType[Add event type to broker DTO's `providedEventTypes` list]
+    DontRegisterEventType[Don't relate the event type to any broker]
+    Done[Done]
+
+    GetEventType --> CheckRef
+    CheckRef --> |Yes| RefIsABrokerInTheBrokerMap
+    RefIsABrokerInTheBrokerMap --> |Yes| RegisterEventType
+    
+    CheckRef --> |No| DontRegisterEventType
+    RefIsABrokerInTheBrokerMap --> |No| DontRegisterEventType
+    RegisterEventType --> Done
+    DontRegisterEventType --> Done
+```
+
+## Processing the triggers
+
+```mermaid
+---
+title: ProcessTriggers
+---
+flowchart TD
+    GetTrigger[Get next trigger]
+    CheckSubscriberRef{spec.subscriber.ref <br> exists?}
+    FetchSubscriberRef[Fetch subscriber resource]
+    CheckSubscriberLabel{Subscriber has the <br> Backstage label}
+    CheckEventType{Trigger has an <br> event type}
+    RegisterSingleRelation[Register `ConsumedBy` relation <br> for eventType and subscriber]
+    RegisterRelation[Register `ConsumedBy` relation <br> for eventType and subscriber]
+
+
+    Ignore[Ignore trigger]
+
+    Done[Done]
+
+    GetTrigger --> CheckSubscriberRef
+    CheckSubscriberRef --> |Yes| FetchSubscriberRef
+    FetchSubscriberRef --> CheckSubscriberLabel
+    CheckSubscriberLabel --> |Yes| CheckEventType
+    CheckEventType --> |Yes| RegisterSingleRelation
+    CheckEventType --> |No| FetchAllEventTypesForBroker
+    FetchAllEventTypesForBroker --> ForEachEventType --> RegisterRelation
+
+
+    RegisterSingleRelation --> Done
+    RegisterRelation --> Done
+
+
+    CheckSubscriberLabel --> |No| Ignore
+    CheckSubscriberRef --> |No| Ignore
+
+    Ignore --> Done
+
+    CheckSubscriberRef -.- CheckSubscriberRefNote["We can't collect subscriber information using the URL. <br> So, let's simply check the subsciber ref."]
+    CheckSubscriberLabel -.- CheckSubscriberLabelNote["The target is to show what resource is using what event types. <br> However, Backstage will only show the resource if it has a special label. <br> So, if that label is missing, simply ignore the subscriber."]
+    CheckEventType -.- CheckEventTypeNote["If the trigger has an event type filter, <br> that means the subscriber is subscribed to that event. <br> If not, the subscriber is subscribed to all events from this trigger. <br> Please note that we ignore other filtering mechanisms such as 'source'."]
+
+    CheckSubscriberRefNote:::note
+    CheckSubscriberLabelNote:::note
+    CheckEventTypeNote:::note
+    classDef note fill:yellow
+```
 
 #### Running the backend
 
