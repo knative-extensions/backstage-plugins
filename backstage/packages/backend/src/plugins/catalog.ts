@@ -24,7 +24,7 @@ export default async function createPlugin(
     discoveryApi: env.discovery,
   });
 
-  const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi);
+  const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi, env.logger);
   builder.addProcessor(knativeEventMeshProcessor);
 
   const { processingEngine, router } = await builder.build();

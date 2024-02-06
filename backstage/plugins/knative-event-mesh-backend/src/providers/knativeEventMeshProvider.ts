@@ -14,7 +14,13 @@ import {EntityProvider, EntityProviderConnection,} from '@backstage/plugin-catal
 
 import {Logger} from 'winston';
 import {readKnativeEventMeshProviderConfigs} from "./config";
-import {KnativeEventMeshProviderConfig} from "./types";
+import {
+    KnativeEventMeshProviderConfig,
+    OwnerKnative,
+    SystemKnative,
+    TypeKnativeBroker,
+    TypeKnativeEvent
+} from "./types";
 
 export type EventType = {
     name:string;
@@ -215,10 +221,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 consumedBy: eventType.consumedBy ?? [],
             },
             spec: {
-                type: 'eventType',
+                type: TypeKnativeEvent,
                 lifecycle: this.env,
-                system: 'knative-event-mesh',
-                owner: 'knative',
+                system: SystemKnative,
+                owner: OwnerKnative,
                 definition: eventType.schemaData || "{}",
             },
         };
@@ -240,10 +246,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 tags: [],
             },
             spec: {
-                type: 'broker',
+                type: TypeKnativeBroker,
                 lifecycle: this.env,
-                system: 'knative-event-mesh',
-                owner: 'knative',
+                system: SystemKnative,
+                owner: OwnerKnative,
                 providesApis: !broker.providedEventTypes ? [] : broker.providedEventTypes.map((eventType:string) => `api:${eventType}`),
             }
         }

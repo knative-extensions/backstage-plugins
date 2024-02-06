@@ -5,3 +5,8 @@ export type KnativeEventMeshProviderConfig = {
     baseUrl:string;
     schedule?:TaskScheduleDefinition;
 };
+
+export const TypeKnativeEvent = 'eventType';
+export const TypeKnativeBroker = 'broker';
+export const SystemKnative = 'knative-event-mesh';
+export const OwnerKnative = 'knative';

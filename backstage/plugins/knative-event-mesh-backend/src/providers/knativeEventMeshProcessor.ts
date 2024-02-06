@@ -7,36 +7,50 @@ import {
     CatalogProcessorEmit,
     CatalogProcessorRelationResult,
 } from '@backstage/plugin-catalog-node';
+import {Logger} from "winston";
+import {TypeKnativeEvent} from "./types";
 
 
 export class KnativeEventMeshProcessor implements CatalogProcessor {
-    private catalogApi:CatalogClient;
+    private readonly catalogApi:CatalogClient;
+    private readonly logger:Logger;
 
-    constructor(catalogApi:CatalogClient) {
+    constructor(catalogApi:CatalogClient, logger:Logger) {
         this.catalogApi = catalogApi;
+
+        this.logger = logger.child({
+            target: this.getProcessorName(),
+        });
     }
 
     getProcessorName():string {
-        // TODO: append env?
-        return `knative-event-mesh-processor`;
+        return "knative-event-mesh-processor";
     }
 
     async preProcessEntity(entity:Entity, _location:LocationSpec, emit:CatalogProcessorEmit, _originLocation:LocationSpec, _cache:CatalogProcessorCache):Promise<Entity> {
-        // TODO: remove hardcoded strings
-        if (entity.kind === 'API' && entity.spec?.type === 'eventType') {
+        if (entity.kind === 'API' && entity.spec?.type === TypeKnativeEvent) {
+            this.logger.debug(`Processing KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name}`);
+
             // if there's no relation to build, return entity as is
             if (!entity.metadata.consumedBy) {
+                this.logger.debug(`No consumers defined for KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name}`);
                 return entity;
             }
 
             const consumers = entity.metadata.consumedBy as string[];
+            this.logger.debug(`Consumers defined for KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name}: ${consumers.join(', ')}`);
 
             // build relations
             for (const consumedBy of consumers) {
+                this.logger.debug(`Building relations for KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name} to consumer ${consumedBy}`);
+
                 // query the catalog for the component with the id
                 const consumerComponents = await this.findComponentsByBackstageId(entity.metadata.namespace as string, consumedBy);
+                this.logger.debug(`Found ${consumerComponents.length} components for KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name} to consumer ${consumedBy}`);
 
                 for (const component of consumerComponents) {
+                    this.logger.debug(`Emitting relations for KnativeEventType entity ${entity.metadata.namespace}/${entity.metadata.name} for consumer ${consumedBy} via component ${component.metadata.namespace}/${component.metadata.name}`);
+
                     // emit a relation from the API to the component
                     const apiToComponentRelation:CatalogProcessorRelationResult = {
                         type: 'relation',
@@ -92,14 +106,13 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
                 filter: {
                     kind: 'component',
                     'metadata.namespace': namespace,
-                    // TODO: hardcoded annotation
                     'metadata.annotations.backstage.io/kubernetes-id': componentId,
                 },
             });
 
             return response.items as ComponentEntity[];
         } catch (e) {
-            // TODO: log
+            this.logger.error(`Failed to find components by backstage id ${namespace}/${componentId}: ${e}`);
             return [] as ComponentEntity[];
         }
     }
