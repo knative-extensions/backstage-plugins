@@ -1,3 +1,4 @@
+import {CatalogClient} from "@backstage/catalog-client";
 import { CatalogBuilder } from '@backstage/plugin-catalog-backend';
 import { ScaffolderEntitiesProcessor } from '@backstage/plugin-catalog-backend-module-scaffolder-entity-model';
 import { Router } from 'express';
@@ -19,7 +20,11 @@ export default async function createPlugin(
   });
   builder.addEntityProvider(knativeEventMeshProviders);
 
-  const knativeEventMeshProcessor = new KnativeEventMeshProcessor();
+  const catalogApi = new CatalogClient({
+    discoveryApi: env.discovery,
+  });
+
+  const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi);
   builder.addProcessor(knativeEventMeshProcessor);
 
   const { processingEngine, router } = await builder.build();
