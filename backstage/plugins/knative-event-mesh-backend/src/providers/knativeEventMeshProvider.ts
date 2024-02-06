@@ -2,7 +2,6 @@ import {PluginTaskScheduler, TaskRunner} from '@backstage/backend-tasks';
 import {
     ANNOTATION_LOCATION,
     ANNOTATION_ORIGIN_LOCATION,
-    ApiEntity,
     ComponentEntity,
     Entity,
     EntityLink,
@@ -14,6 +13,7 @@ import {EntityProvider, EntityProviderConnection,} from '@backstage/plugin-catal
 
 import {Logger} from 'winston';
 import {readKnativeEventMeshProviderConfigs} from "./config";
+import {KnativeEventType} from "./knativeEventType";
 import {KnativeEventMeshProviderConfig} from "./types";
 
 export type EventType = {
@@ -183,11 +183,9 @@ export class KnativeEventMeshProvider implements EntityProvider {
         return entities;
     }
 
-    buildEventTypeEntity(eventType:EventType):ApiEntity {
+    buildEventTypeEntity(eventType:EventType):KnativeEventType {
         const annotations = eventType.annotations ?? {} as Record<string, string>;
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
-        // TODO: extend the ApiEntity class to include consumedBy
-        annotations['api-consumed-by'] = eventType.consumedBy?.join(',') ?? ''
 
         const links:EntityLink[] = [];
         if (eventType.schemaURL) {
@@ -219,6 +217,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 owner: 'knative',
                 definition: eventType.schemaData || "{}",
             },
+            consumedBy: eventType.consumedBy ?? [],
         };
     }
 
