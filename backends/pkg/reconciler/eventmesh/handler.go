@@ -119,14 +119,14 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	// map key: "<namespace>/<eventType.spec.type>"
 	etTypeMap := make(map[string]*EventType)
 	// map key: "<namespace>/<eventType.name>"
-	etNameMap := make(map[string]*EventType)
+	etByNamespacedName := make(map[string]*EventType)
 
 	for _, et := range convertedEventTypes {
 		etTypeMap[et.NamespaceAndType()] = et
-		etNameMap[et.NameAndNamespace()] = et
+		etByNamespacedName[et.NameAndNamespace()] = et
 	}
 
-	subscriptionMap, err := buildSubscriptions(ctx, listers.TriggerLister, brokerMap, etNameMap, logger)
+	subscriptionMap, err := buildSubscriptions(ctx, listers.TriggerLister, brokerMap, etByNamespacedName, logger)
 	if err != nil {
 		logger.Errorw("Error building subscriptions", "error", err)
 		return EventMesh{}, err
@@ -187,7 +187,7 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 	return convertedEventTypes, err
 }
 
-func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etNameMap map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
+func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.TriggerLister, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) (*SubscriptionMap, error) {
 	// map key: "<namespace>/<eventType.spec.type>"
 	subscriptionMap := make(SubscriptionMap)
 
@@ -227,7 +227,7 @@ func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.Tri
 		}
 
 		// build the list of event types that the subscriber is subscribed to
-		subscribedEventTypes := buildSubscribedEventTypes(trigger, brokerMap[brokerRef], etNameMap, logger)
+		subscribedEventTypes := buildSubscribedEventTypes(trigger, brokerMap[brokerRef], etByNamespacedName, logger)
 
 		// go over the event types and add the subscriber to the subscription map
 		for _, eventType := range subscribedEventTypes {
