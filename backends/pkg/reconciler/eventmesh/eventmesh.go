@@ -8,6 +8,7 @@ import (
 	eventingv1beta2 "knative.dev/eventing/pkg/apis/eventing/v1beta2"
 )
 
+// Reconciler is a stub reconciler for getting the informers injected by sharedmain.
 type Reconciler struct {
 }
 

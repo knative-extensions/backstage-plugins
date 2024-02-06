@@ -89,7 +89,7 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	// map key: "<namespace>/<name>"
 	brokerMap := make(map[string]*Broker)
 	for _, cbr := range convertedBrokers {
-		brokerMap[cbr.GetNameAndNamespace()] = cbr
+		brokerMap[cbr.GetNamespacedName()] = cbr
 	}
 
 	// fetch the event types and convert them to the representation that's consumed by the Backstage plugin.
@@ -103,22 +103,25 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	for _, et := range convertedEventTypes {
 		if et.Reference != "" {
 			if br, ok := brokerMap[et.Reference]; ok {
-				br.ProvidedEventTypes = append(br.ProvidedEventTypes, et.NameAndNamespace())
+				br.ProvidedEventTypes = append(br.ProvidedEventTypes, et.NamespacedName())
 			}
 		}
 	}
 
+	// fetch the triggers we will process them later
 	triggers, err := listers.TriggerLister.List(labels.Everything())
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
 		return EventMesh{}, err
 	}
 
-	// TODO: docs
+	// build a map for easier access to the ETs by their namespaced name.
+	// we need this map when processing the triggers to find out ET definitions for the ET references
+	// brokers provide.
 	// map key: "<namespace>/<eventType.name>"
 	etByNamespacedName := make(map[string]*EventType)
 	for _, et := range convertedEventTypes {
-		etByNamespacedName[et.NameAndNamespace()] = et
+		etByNamespacedName[et.NamespacedName()] = et
 	}
 
 	for _, trigger := range triggers {
@@ -138,6 +141,8 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	return eventMesh, nil
 }
 
+// processTrigger processes the trigger and updates the ETs that the trigger is subscribed to.
+// The consumedBy fields of ETs are updated with the subscriber's Backstage ID.
 func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) error {
 	// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
 	if trigger.Spec.Subscriber.Ref == nil {
@@ -160,7 +165,7 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 	if trigger.Spec.Broker == "" {
 		return nil
 	}
-	brokerRef := NameAndNamespace(trigger.Namespace, trigger.Spec.Broker)
+	brokerRef := NamespacedName(trigger.Namespace, trigger.Spec.Broker)
 	if _, ok := brokerMap[brokerRef]; !ok {
 		return nil
 	}
@@ -174,6 +179,10 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 	return nil
 }
 
+// collectSubscribedEventTypes collects the event types that the trigger is subscribed to.
+// It does it by checking the trigger's filter and finding out the ET types that the filter is interested in.
+// Later on, it finds the ETs that the broker provides and returns the ones matches the type.
+// If the trigger has no filter, it returns all the ETs that the broker provides.
 func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, etByNamespacedName map[string]*EventType, logger *zap.SugaredLogger) []*EventType {
 	logger.Debugw("Collecting subscribed event types", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", broker.Name)
 
@@ -219,6 +228,7 @@ func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, et
 	return subscribedEventTypes
 }
 
+// fetchBrokers fetches the brokers and converts them to the representation that's consumed by the Backstage plugin.
 func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) ([]*Broker, error) {
 	fetchedBrokers, err := brokerLister.List(labels.Everything())
 	if err != nil {
@@ -234,6 +244,7 @@ func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.Sugar
 	return convertedBrokers, err
 }
 
+// fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.
 func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, logger *zap.SugaredLogger) ([]*EventType, error) {
 	fetchedEventTypes, err := eventTypeLister.List(labels.Everything())
 	if err != nil {
@@ -257,6 +268,7 @@ func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, log
 	return convertedEventTypes, err
 }
 
+// getSubscriberBackstageId fetches the subscriber resource and returns the Backstage ID if it's present.
 func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, subRef *duckv1.KReference, logger *zap.SugaredLogger) (string, error) {
 	refGvr, _ := meta.UnsafeGuessKindToResource(schema.GroupVersionKind{
 		subRef.Group,
