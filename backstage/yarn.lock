@@ -4683,6 +4683,18 @@
   dependencies:
     ioredis "^5.3.2"
 
+"@knative-extensions/plugin-knative-event-mesh-backend@link:plugins/knative-event-mesh-backend":
+  version "0.0.0-nightly"
+  dependencies:
+    "@backstage/backend-common" "^0.19.9"
+    "@backstage/config" "^1.1.1"
+    "@types/express" "*"
+    express "^4.17.1"
+    express-promise-router "^4.1.0"
+    node-fetch "^2.6.7"
+    winston "^3.2.1"
+    yn "^4.0.0"
+
 "@kubernetes/client-node@0.19.0":
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@kubernetes/client-node/-/client-node-0.19.0.tgz#ebd2121e5c8dc1a47ff1b2574bda1e760d0abb82"
