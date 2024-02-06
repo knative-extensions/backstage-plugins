@@ -29,16 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// TODO: need additional tests here for the various cases of subscriptions:
-// - No triggers
-// - Trigger does not have a broker
-// - Trigger does not have a subscriber
-// - Trigger has a subscriber, but it does not exist
-// - Trigger has a subscriber and it exists, but it does not have the correct label
-// - Trigger has no filter
-// - Trigger has a filter, but no `type` filter
-// - Trigger has a filter with a `type` filter, but it is blank
-
 func TestBuildEventMesh(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -288,6 +278,233 @@ func TestBuildEventMesh(t *testing.T) {
 						Type:       "test-eventtype-type",
 						Reference:  "test-ns/test-broker",
 						ConsumedBy: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "Ignore triggers that are not bound to a subscriber that exists",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{
+				testingv1.NewTrigger("test-trigger", "test-ns", "test-broker",
+					testingv1.WithTriggerSubscriberRef(
+						metav1.GroupVersionKind{
+							Group:   "",
+							Version: "v1",
+							Kind:    "Service",
+						},
+						"test-subscriber",
+						"test-ns",
+					),
+					WithEventTypeFilter("test-eventtype-type"),
+				),
+			},
+			extraObjects: []runtime.Object{},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:               "test-broker",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
+				},
+				EventTypes: []*EventType{
+					{
+						Name:       "test-eventtype",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "Ignore triggers that are bound to a subscriber that is not registered on Backstage",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{
+				testingv1.NewTrigger("test-trigger", "test-ns", "test-broker",
+					testingv1.WithTriggerSubscriberRef(
+						metav1.GroupVersionKind{
+							Group:   "",
+							Version: "v1",
+							Kind:    "Service",
+						},
+						"test-subscriber",
+						"test-ns",
+					),
+					WithEventTypeFilter("test-eventtype-type"),
+				),
+			},
+			extraObjects: []runtime.Object{
+				&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-subscriber",
+						Namespace: "test-ns",
+						Labels:    map[string]string{"NO": "NO"},
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:               "test-broker",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
+				},
+				EventTypes: []*EventType{
+					{
+						Name:       "test-eventtype",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "Trigger with no filter subscribes to all event types provided by the broker",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype-1", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-1"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+				testingv1beta2.NewEventType("test-eventtype-2", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-2"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{
+				testingv1.NewTrigger("test-trigger", "test-ns", "test-broker",
+					testingv1.WithTriggerSubscriberRef(
+						metav1.GroupVersionKind{
+							Group:   "",
+							Version: "v1",
+							Kind:    "Service",
+						},
+						"test-subscriber",
+						"test-ns",
+					),
+				),
+			},
+			extraObjects: []runtime.Object{
+				&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-subscriber",
+						Namespace: "test-ns",
+						Labels:    map[string]string{"backstage.io/kubernetes-id": "test-subscriber"},
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:      "test-broker",
+						Namespace: "test-ns",
+						ProvidedEventTypes: []string{
+							"test-ns/test-eventtype-1",
+							"test-ns/test-eventtype-2",
+						}},
+				},
+				EventTypes: []*EventType{
+					{
+						Name:       "test-eventtype-1",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type-1",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{"test-subscriber"},
+					},
+					{
+						Name:       "test-eventtype-2",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type-2",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{"test-subscriber"},
+					},
+				},
+			},
+		},
+		{
+			name: "Trigger has an accept all types filter subscribes to all event types provided by the broker",
+			brokers: []*eventingv1.Broker{
+				testingv1.NewBroker("test-broker", "test-ns"),
+			},
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype-1", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-1"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+				testingv1beta2.NewEventType("test-eventtype-2", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type-2"),
+					testingv1beta2.WithEventTypeReference(brokerReference("test-broker", "test-ns")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{
+				testingv1.NewTrigger("test-trigger", "test-ns", "test-broker",
+					testingv1.WithTriggerSubscriberRef(
+						metav1.GroupVersionKind{
+							Group:   "",
+							Version: "v1",
+							Kind:    "Service",
+						},
+						"test-subscriber",
+						"test-ns",
+					),
+					WithEventTypeFilter(""),
+				),
+			},
+			extraObjects: []runtime.Object{
+				&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-subscriber",
+						Namespace: "test-ns",
+						Labels:    map[string]string{"backstage.io/kubernetes-id": "test-subscriber"},
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []*Broker{
+					{
+						Name:      "test-broker",
+						Namespace: "test-ns",
+						ProvidedEventTypes: []string{
+							"test-ns/test-eventtype-1",
+							"test-ns/test-eventtype-2",
+						}},
+				},
+				EventTypes: []*EventType{
+					{
+						Name:       "test-eventtype-1",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type-1",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{"test-subscriber"},
+					},
+					{
+						Name:       "test-eventtype-2",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type-2",
+						Reference:  "test-ns/test-broker",
+						ConsumedBy: []string{"test-subscriber"},
 					},
 				},
 			},
