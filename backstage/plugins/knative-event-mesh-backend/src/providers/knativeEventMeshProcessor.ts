@@ -6,7 +6,6 @@ import {
     CatalogProcessorEmit,
     CatalogProcessorRelationResult,
 } from '@backstage/plugin-catalog-node';
-import {KnativeEventType} from "./knativeEventType";
 
 
 export class KnativeEventMeshProcessor implements CatalogProcessor {
@@ -18,15 +17,15 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
     async preProcessEntity(entity:Entity, _location:LocationSpec, emit:CatalogProcessorEmit, _originLocation:LocationSpec, _cache:CatalogProcessorCache):Promise<Entity> {
         // TODO: remove hardcoded strings
         if (entity.kind === 'API' && entity.spec?.type === 'eventType') {
-            const eventType = entity as KnativeEventType;
-
             // if there's no relation to build, return entity as is
-            if (!eventType.consumedBy) {
-                return eventType;
+            if (!entity.metadata.consumedBy) {
+                return entity;
             }
 
+            const consumers = entity.metadata.consumedBy as string[];
+
             // build relations
-            for (const consumedBy of eventType.consumedBy) {
+            for (const consumedBy of consumers) {
                 // TODO: query the catalog for the component with the id
 
                 // emit a relation from the API to the component
