@@ -48,6 +48,7 @@ describe('KnativeEventMeshProvider', () => {
                         links: [],
                         uid: undefined,
                         etag: undefined,
+                        consumedBy: [],
                     },
                     spec: {
                         type: 'eventType',
@@ -74,6 +75,7 @@ describe('KnativeEventMeshProvider', () => {
                     },
                     schemaData: 'test-schema-data',
                     schemaURL: 'http://test-schema-url',
+                    consumedBy: ["test-consumer1", "test-consumer2"],
                 },
                 expected: {
                     apiVersion: 'backstage.io/v1alpha1',
@@ -101,6 +103,7 @@ describe('KnativeEventMeshProvider', () => {
                         ],
                         uid: undefined,
                         etag: undefined,
+                        consumedBy: ["test-consumer1", "test-consumer2"],
                     },
                     spec: {
                         type: 'eventType',
