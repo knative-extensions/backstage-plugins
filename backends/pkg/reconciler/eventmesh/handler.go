@@ -171,7 +171,7 @@ func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.Tri
 	triggers, err := triggerLister.List(labels.Everything())
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
-		return nil, err
+		return &subscriptionMap, err
 	}
 
 	for _, trigger := range triggers {
@@ -181,12 +181,12 @@ func buildSubscriptions(ctx context.Context, triggerLister eventinglistersv1.Tri
 		}
 		brokerRef := NameAndNamespace(trigger.Namespace, trigger.Spec.Broker)
 		if _, ok := brokerMap[brokerRef]; !ok {
-			return nil, nil
+			continue
 		}
 
 		// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
 		if trigger.Spec.Subscriber.Ref == nil {
-			return nil, nil
+			continue
 		}
 
 		subscriberBackstageId, err := getSubscriberBackstageId(ctx, dynamicClient, trigger, logger)
