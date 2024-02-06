@@ -26,6 +26,7 @@ export type EventType = {
     schemaURL?:string;
     labels?:Record<string, string>;
     annotations?:Record<string, string>;
+    consumedBy?:string[];
 };
 
 export type Broker = {
@@ -139,7 +140,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
     }
 
     getProviderName():string {
-        return `knative-event-mesh-${this.env}`;
+        return `knative-event-mesh-provider-${this.env}`;
     }
 
     async connect(connection:EntityProviderConnection):Promise<void> {
@@ -185,6 +186,8 @@ export class KnativeEventMeshProvider implements EntityProvider {
     buildEventTypeEntity(eventType:EventType):ApiEntity {
         const annotations = eventType.annotations ?? {} as Record<string, string>;
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
+        // TODO: extend the ApiEntity class to include consumedBy
+        annotations['api-consumed-by'] = eventType.consumedBy?.join(',') ?? ''
 
         const links:EntityLink[] = [];
         if (eventType.schemaURL) {
