@@ -95,11 +95,9 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
     }
 
     private async findComponentsByBackstageId(namespace:string, componentId:string) {
-        // TODO: make use of `backstage.io/kubernetes-namespace` annotation?
-        // TODO: make use of `backstage.io/kubernetes-label-selector` annotation?
-
         // fetch the component by the id
-        // example: http://localhost:7007/api/catalog/entities/by-query?filter=kind=component,metadata.namespace=default,metadata.annotations.backstage.io/kubernetes-id=fraud-detector
+        // example: http://localhost:7007/api/catalog/entities/by-query
+        // ?filter=kind=component,metadata.namespace=default,metadata.annotations.backstage.io/kubernetes-id=fraud-detector
 
         try {
             let response = await this.catalogApi.queryEntities({
