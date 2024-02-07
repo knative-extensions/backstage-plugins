@@ -14,7 +14,6 @@ See [Event Mesh plugin README file](./backstage/plugins/knative-event-mesh-backe
 
 The architecture of the plugin is as follows:
 ```
-      
       Kubernetes                                     Backstage
 ┌────────────────────┐           ┌───────────────────────────────────────────────┐
 │                    │           │       Plugin                                  │
@@ -84,7 +83,7 @@ flowchart TD
     GetEventType --> CheckRef
     CheckRef --> |Yes| RefIsABrokerInTheBrokerMap
     RefIsABrokerInTheBrokerMap --> |Yes| RegisterEventType
-    
+
     CheckRef --> |No| DontRegisterEventType
     RefIsABrokerInTheBrokerMap --> |No| DontRegisterEventType
     RegisterEventType --> Done
