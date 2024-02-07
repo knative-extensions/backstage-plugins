@@ -14,7 +14,13 @@ import {EntityProvider, EntityProviderConnection,} from '@backstage/plugin-catal
 
 import {Logger} from 'winston';
 import {readKnativeEventMeshProviderConfigs} from "./config";
-import {KnativeEventMeshProviderConfig} from "./types";
+import {
+    KnativeEventMeshProviderConfig,
+    OwnerKnative,
+    SystemKnative,
+    TypeKnativeBroker,
+    TypeKnativeEvent
+} from "./types";
 
 export type EventType = {
     name:string;
@@ -26,6 +32,7 @@ export type EventType = {
     schemaURL?:string;
     labels?:Record<string, string>;
     annotations?:Record<string, string>;
+    consumedBy?:string[];
 };
 
 export type Broker = {
@@ -139,7 +146,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
     }
 
     getProviderName():string {
-        return `knative-event-mesh-${this.env}`;
+        return `knative-event-mesh-provider-${this.env}`;
     }
 
     async connect(connection:EntityProviderConnection):Promise<void> {
@@ -207,13 +214,17 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 // we don't use tags
                 tags: [],
                 links: links,
-                title: `${eventType.type} - (${eventType.namespace}/${eventType.name})`
+                title: `${eventType.type} - (${eventType.namespace}/${eventType.name})`,
+                // custom field, stored
+                // see https://backstage.io/docs/features/software-catalog/extending-the-model#adding-new-fields-to-the-metadata-object
+                // can't make it type safe as the Metadata type is not exported
+                consumedBy: eventType.consumedBy ?? [],
             },
             spec: {
-                type: 'eventType',
+                type: TypeKnativeEvent,
                 lifecycle: this.env,
-                system: 'knative-event-mesh',
-                owner: 'knative',
+                system: SystemKnative,
+                owner: OwnerKnative,
                 definition: eventType.schemaData || "{}",
             },
         };
@@ -235,10 +246,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 tags: [],
             },
             spec: {
-                type: 'broker',
+                type: TypeKnativeBroker,
                 lifecycle: this.env,
-                system: 'knative-event-mesh',
-                owner: 'knative',
+                system: SystemKnative,
+                owner: OwnerKnative,
                 providesApis: !broker.providedEventTypes ? [] : broker.providedEventTypes.map((eventType:string) => `api:${eventType}`),
             }
         }

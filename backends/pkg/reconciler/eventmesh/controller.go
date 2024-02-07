@@ -13,6 +13,7 @@ import (
 	eventtypereconciler "knative.dev/eventing/pkg/client/injection/reconciler/eventing/v1beta2/eventtype"
 
 	brokerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/broker"
+	triggerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/trigger"
 	eventtypeinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1beta2/eventtype"
 
 	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
@@ -22,6 +23,7 @@ import (
 type Listers struct {
 	EventTypeLister eventinglistersv1beta2.EventTypeLister
 	BrokerLister    eventinglistersv1.BrokerLister
+	TriggerLister   eventinglistersv1.TriggerLister
 }
 
 func NewController(ctx context.Context) *controller.Impl {
@@ -40,6 +42,7 @@ func NewController(ctx context.Context) *controller.Impl {
 	listers := Listers{
 		EventTypeLister: eventtypeinformer.Get(ctx).Lister(),
 		BrokerLister:    brokerinformer.Get(ctx).Lister(),
+		TriggerLister:   triggerinformer.Get(ctx).Lister(),
 	}
 
 	go startWebServer(ctx, listers)
@@ -56,7 +59,7 @@ func startWebServer(ctx context.Context, listers Listers) {
 	r := mux.NewRouter()
 	r.Use(commonMiddleware)
 
-	r.HandleFunc("/", EventMeshHandler(ctx, listers)).Methods("GET")
+	r.HandleFunc("/", HttpHandler(ctx, listers)).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", r))

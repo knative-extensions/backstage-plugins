@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/hashicorp/golang-lru v1.0.2
 	go.uber.org/zap v1.26.0
 	k8s.io/apimachinery v0.27.6
 	knative.dev/eventing v0.39.1
@@ -44,7 +45,6 @@ require (
 	github.com/google/mako v0.0.0-20190821191249-122f8dcef9e3 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
-	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
