@@ -1,0 +1,84 @@
+name: Publish snapshot on NPM
+
+on:
+  # When manually triggered
+  workflow_dispatch:
+
+  # When there's a new commit in main branch
+  push:
+    branches: [ "main" ]
+
+jobs:
+  publish-release-snapshot-on-npm:
+    name: Publish release on NPM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup release name
+        run: |
+          # get the short git hash
+          git_hash=$(git rev-parse --short "$GITHUB_SHA")
+          # get timestamp
+          now=$(date +'%Y%m%d%H%M%S')
+          # build the release name
+          new_version="0.0.0-snapshot.${git_hash}.${now}"
+          echo "RELEASE_NAME=${new_version}" >> $GITHUB_ENV
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'backstage/.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: 'backstage/yarn.lock'
+
+      - name: Print environment
+        run: |
+          node --version
+          yarn --version
+
+      - name: Print release name
+        run: |
+          echo "Release name: ${RELEASE_NAME}"
+
+      - name: Install dependencies
+        shell: bash
+        working-directory: ./backstage
+        run: yarn --prefer-offline --frozen-lockfile
+
+      - name: Install tooling
+        shell: bash
+        working-directory: ./backstage
+        run: npm install @backstage/cli -g
+
+      - name: Run tests
+        shell: bash
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn test
+
+      - name: Build
+        shell: bash
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn tsc
+          yarn build:all
+
+      - name: Update version of knative-event-mesh-backend plugin
+        shell: bash
+        working-directory: ./backstage/plugins/knative-event-mesh-backend
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn version --new-version ${RELEASE_NAME} --no-git-tag-version
+
+      - name: Publish knative-event-mesh-backend plugin
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+          package: backstage/plugins/knative-event-mesh-backend
+          tag: snapshot

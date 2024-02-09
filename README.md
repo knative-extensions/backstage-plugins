@@ -192,3 +192,17 @@ Then, start the backstage instance:
 cd ./backstage
 yarn dev
 ```
+
+#### Testing GitHub Actions
+
+You need `act` installed: https://github.com/nektos/act
+
+```bash
+
+# Specify the job to run
+act -j '<job name>'
+# ex:
+# act -j 'publish-release-snapshot-on-npm'
+# if having issues on Apple Silicon, use:
+# act --rm --container-architecture linux/amd64 -j 'publish-release-snapshot-on-npm'
+```
