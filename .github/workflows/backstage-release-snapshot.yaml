@@ -21,10 +21,8 @@ jobs:
         run: |
           # get the short git hash
           git_hash=$(git rev-parse --short "$GITHUB_SHA")
-          # get timestamp
-          now=$(date +'%Y%m%d%H%M%S')
           # build the release name
-          new_version="0.0.0-snapshot.${git_hash}.${now}"
+          new_version="0.0.0-snapshot.${git_hash}"
           echo "RELEASE_NAME=${new_version}" >> $GITHUB_ENV
 
       - name: Setup Node.js
