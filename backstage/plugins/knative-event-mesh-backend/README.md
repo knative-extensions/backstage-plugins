@@ -47,10 +47,7 @@ catalog:
 ```
 
 Configure the scheduler for the entity provider and enable the processor. Add the following code
-to `packages/backend/src/plugins/catalog.ts`
-file:
-
-In file `packages/backend/src/plugins/`catalog.ts:
+to `packages/backend/src/plugins/catalog.ts` file:
 
 ```ts
 import {CatalogClient} from "@backstage/catalog-client";
