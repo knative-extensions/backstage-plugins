@@ -46,13 +46,15 @@ catalog:
           timeout: { minutes: 1 }
 ```
 
-Configure the scheduler for the entity provider. Add the following code to `packages/backend/src/plugins/catalog.ts`
-file:
-
-In file `packages/backend/src/plugins/catalog.ts`:
+Configure the scheduler for the entity provider and enable the processor. Add the following code
+to `packages/backend/src/plugins/catalog.ts` file:
 
 ```ts
-import {KnativeEventMeshProvider} from '@knative-extensions/plugin-knative-event-mesh-backend';
+import {CatalogClient} from "@backstage/catalog-client";
+import {
+    KnativeEventMeshProcessor,
+    KnativeEventMeshProvider
+} from '@knative-extensions/plugin-knative-event-mesh-backend';
 
 export default async function createPlugin(
     env:PluginEnvironment,
@@ -61,13 +63,18 @@ export default async function createPlugin(
 
     /* ... other processors and/or providers ... */
 
-    // ADD THIS
+    // ADD THESE
     builder.addEntityProvider(
         KnativeEventMeshProvider.fromConfig(env.config, {
             logger: env.logger,
             scheduler: env.scheduler,
         }),
     );
+    const catalogApi = new CatalogClient({
+        discoveryApi: env.discovery,
+    });
+    const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi, env.logger);
+    builder.addProcessor(knativeEventMeshProcessor);
 
     /* ... other processors and/or providers ... */
 
