@@ -78,9 +78,23 @@ jobs:
           export RELEASE_VERSION="${RELEASE_NAME:1}"
           yarn version --new-version ${RELEASE_VERSION} --no-git-tag-version
 
+      - name: Prepack knative-event-mesh-backend plugin
+        shell: bash
+        working-directory: ./backstage/plugins/knative-event-mesh-backend
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn prepack
+
       - name: Publish knative-event-mesh-backend plugin
         uses: JS-DevTools/npm-publish@v2
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
           package: backstage/plugins/knative-event-mesh-backend
+
+      - name: Postpack knative-event-mesh-backend plugin
+        shell: bash
+        working-directory: ./backstage/plugins/knative-event-mesh-backend
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn postpack
