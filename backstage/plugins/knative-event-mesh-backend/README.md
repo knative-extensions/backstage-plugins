@@ -5,6 +5,8 @@ The Event Mesh plugin is a Backstage plugin that allows you to view and manage K
 The Backstage plugin talks to a special backend that runs in the Kubernetes cluster and communicates with the Kubernetes
 API server.
 
+A demo setup for this plugin is available at https://github.com/aliok/knative-backstage-demo.
+
 ## Installation
 
 Install the backend and the relevant configuration in the Kubernetes cluster
