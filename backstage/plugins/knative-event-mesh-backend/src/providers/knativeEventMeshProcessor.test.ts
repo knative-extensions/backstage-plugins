@@ -18,7 +18,7 @@ describe('KnativeEventMeshProcessor', () => {
 
     describe('preProcessEntity', () => {
 
-        const processor = new KnativeEventMeshProcessor(catalogApi, logger);
+        const processor = new KnativeEventMeshProcessor(catalogApi, logger, 5);
 
         type TestCase = {
             name:string;
@@ -33,7 +33,13 @@ describe('KnativeEventMeshProcessor', () => {
                     cursor: string,
                     limit: number
                 },
-                queryEntitiesResult:Entity[];
+                queryEntitiesResult: {
+                   items: Entity[],
+                    pageInfo: {
+                        nextCursor?: string;
+                        prevCursor?: string;
+                    };
+                };
             };
             expectedRelations?:CatalogProcessorRelationResult[];
         };
@@ -65,16 +71,19 @@ describe('KnativeEventMeshProcessor', () => {
                             'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                         },
                         cursor: undefined,
-                        limit: 10000
+                        limit: 5
                     },
-                    queryEntitiesResult: [{
-                        apiVersion: 'backstage.io/v1alpha1',
-                        kind: 'component',
-                        metadata: {
-                            namespace: 'default',
-                            name: 'consumer-1',
-                        },
-                    }],
+                    queryEntitiesResult:{
+                        items:[{
+                            apiVersion: 'backstage.io/v1alpha1',
+                            kind: 'component',
+                            metadata: {
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        }],
+                        pageInfo: {}
+                    },
                 },
                 expectedRelations: [
                     {
@@ -174,24 +183,107 @@ describe('KnativeEventMeshProcessor', () => {
                             'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                         },
                         cursor: undefined,
-                        limit: 10000
+                        limit: 5
                     },
-                    queryEntitiesResult: [],
+                    queryEntitiesResult: {
+                        items: [],
+                        pageInfo: {}
+                    },
                 },
                 expectedRelations: [],
             },
+            {
+                name: 'should make a 2nd call with cursor if there are more than 5 items returned and limit is 5',
+                entity: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'API',
+                    metadata: {
+                        namespace: 'default',
+                        name: 'et-1',
+                        consumedBy: ['consumer-1'],
+                    },
+                    spec: {
+                        owner: 'owner',
+                        system: 'system',
+                        lifecycle: 'lifecycle',
+                        definition: 'definition',
+                        type: 'eventType',
+                    },
+                },
+                query: {
+                    queryEntitiesRequest: {
+                        filter: {
+                            kind: 'component',
+                            'metadata.namespace': 'default',
+                            'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
+                        },
+                        cursor: undefined,
+                        limit: 5,
+                    },
+                    queryEntitiesResult:
+                        {
+                          items: [
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-2',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-3',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-4',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-5',
+                                    },
+                                },
+                            ],
+                          pageInfo: {
+                                nextCursor: "2",
+                                prevCursor: "0"
+                           }
+                        },
+                    expectedRelations: []
+                },
+            }
         ];
 
         for (const testCase of testCases) {
             it(testCase.name, async () => {
                 if (testCase.query) {
                     let entityQueryResult = {
-                        items: testCase.query.queryEntitiesResult,
+                        items: testCase.query.queryEntitiesResult.items,
                         totalItems: testCase.query.queryEntitiesResult.length,
-                        pageInfo: {}
+                        pageInfo: testCase.query.queryEntitiesResult.pageInfo
                     };
 
-                    catalogApi.queryEntities.mockReturnValue(Promise.resolve(entityQueryResult));
+                    catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
                 }
 
                 const emitFn = jest.fn();
@@ -211,7 +303,8 @@ describe('KnativeEventMeshProcessor', () => {
                 expect(output).toEqual(testCase.entity);
 
                 if (testCase.query) {
-                    expect(catalogApi.queryEntities).toHaveBeenCalledTimes(1);
+                    expect(catalogApi.queryEntities).toHaveBeenCalledTimes(testCase.query.queryEntitiesResult.pageInfo.nextCursor
+                        ? Number(testCase.query.queryEntitiesResult.pageInfo.nextCursor) : 1);
                     expect(catalogApi.queryEntities).toHaveBeenCalledWith(testCase.query.queryEntitiesRequest);
                 } else {
                     expect(catalogApi.queryEntities).not.toHaveBeenCalled();

@@ -14,10 +14,11 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
-    private readonly queryEntityPageLimit:number = 10000;
+    private readonly queryEntityPageLimit:number;
 
-    constructor(catalogApi:CatalogClient, logger:Logger) {
+    constructor(catalogApi:CatalogClient, logger:Logger, queryEntityPageLimit?:number) {
         this.catalogApi = catalogApi;
+        this.queryEntityPageLimit = queryEntityPageLimit ?? 10000;
 
         this.logger = logger.child({
             target: this.getProcessorName(),
