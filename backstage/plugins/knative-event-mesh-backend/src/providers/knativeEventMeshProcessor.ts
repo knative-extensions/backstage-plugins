@@ -14,7 +14,6 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
-    private catalogApiCursor: string | undefined = "0";
 
     constructor(catalogApi:CatalogClient, logger:Logger) {
         this.catalogApi = catalogApi;
@@ -99,22 +98,24 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
         // fetch the component by the id
         // example: http://localhost:7007/api/catalog/entities/by-query
         // ?filter=kind=component,metadata.namespace=default,metadata.annotations.backstage.io/kubernetes-id=fraud-detector
+        let catalogApiCursor: string | undefined;
+        let entities: Entity[];
 
         try {
-            let response = await this.catalogApi.queryEntities({
-                filter: {
-                    kind: 'component',
-                    'metadata.namespace': namespace,
-                    'metadata.annotations.backstage.io/kubernetes-id': componentId,
-                },
-                cursor: this.catalogApiCursor
-            });
+            do {
+                let response = await this.catalogApi.queryEntities({
+                    filter: {
+                        kind: 'component',
+                        'metadata.namespace': namespace,
+                        'metadata.annotations.backstage.io/kubernetes-id': componentId,
+                    },
+                    cursor: catalogApiCursor
+                });
+                catalogApiCursor = response.pageInfo.nextCursor;
+                entities = entities.concat(response.items);
+            } while (catalogApiCursor)
 
-            if(response.pageInfo.nextCursor !== undefined) {
-                this.catalogApiCursor = response.pageInfo.nextCursor;
-            }
-
-            return response.items as ComponentEntity[];
+            return entities;
         } catch (e) {
             this.logger.error(`Failed to find components by backstage id ${namespace}/${componentId}: ${e}`);
             return [] as ComponentEntity[];
