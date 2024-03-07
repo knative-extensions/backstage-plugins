@@ -14,7 +14,7 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
-    private catalogApiCursor;
+    private catalogApiCursor: string | undefined = "0";
 
     constructor(catalogApi:CatalogClient, logger:Logger) {
         this.catalogApi = catalogApi;
@@ -110,7 +110,7 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
                 cursor: this.catalogApiCursor
             });
 
-            if(response.pageInfo.nextCursor !== 'undefined') {
+            if(response.pageInfo.nextCursor !== undefined) {
                 this.catalogApiCursor = response.pageInfo.nextCursor;
             }
 
