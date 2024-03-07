@@ -14,6 +14,7 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
+    private readonly queryEntityPageLimit:number = 10000;
 
     constructor(catalogApi:CatalogClient, logger:Logger) {
         this.catalogApi = catalogApi;
@@ -99,7 +100,7 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
         // example: http://localhost:7007/api/catalog/entities/by-query
         // ?filter=kind=component,metadata.namespace=default,metadata.annotations.backstage.io/kubernetes-id=fraud-detector
         let catalogApiCursor: string | undefined;
-        let entities: Entity[];
+        let entities: Entity[] = [];
 
         try {
             do {
@@ -109,7 +110,8 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
                         'metadata.namespace': namespace,
                         'metadata.annotations.backstage.io/kubernetes-id': componentId,
                     },
-                    cursor: catalogApiCursor
+                    cursor: catalogApiCursor,
+                    limit: this.queryEntityPageLimit
                 });
                 catalogApiCursor = response.pageInfo.nextCursor;
                 entities = entities.concat(response.items);

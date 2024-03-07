@@ -30,7 +30,8 @@ describe('KnativeEventMeshProcessor', () => {
                         'metadata.namespace':string,
                         'metadata.annotations.backstage.io/kubernetes-id':string,
                     },
-                    cursor: string
+                    cursor: string,
+                    limit: number
                 },
                 queryEntitiesResult:Entity[];
             };
@@ -63,7 +64,8 @@ describe('KnativeEventMeshProcessor', () => {
                             'metadata.namespace': 'default',
                             'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                         },
-                        cursor: "0"
+                        cursor: undefined,
+                        limit: 10000
                     },
                     queryEntitiesResult: [{
                         apiVersion: 'backstage.io/v1alpha1',
@@ -171,80 +173,12 @@ describe('KnativeEventMeshProcessor', () => {
                             'metadata.namespace': 'default',
                             'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                         },
-                        cursor: "0"
+                        cursor: undefined,
+                        limit: 10000
                     },
                     queryEntitiesResult: [],
                 },
                 expectedRelations: [],
-            },
-            {
-                name: 'should request with cursor and get next&previous cursors',
-                entity: {
-                    apiVersion: 'backstage.io/v1alpha1',
-                    kind: 'API',
-                    metadata: {
-                        namespace: 'default',
-                        name: 'et-1',
-                        consumedBy: ['consumer-1'],
-                    },
-                    spec: {
-                        owner: 'owner',
-                        system: 'system',
-                        lifecycle: 'lifecycle',
-                        definition: 'definition',
-                        type: 'eventType',
-                    },
-                },
-                query: {
-                    queryEntitiesRequest: {
-                        filter: {
-                            kind: 'component',
-                            'metadata.namespace': 'default',
-                            'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
-                        },
-                        cursor: "0"
-                    },
-                    queryEntitiesResult: [{
-                        apiVersion: 'backstage.io/v1alpha1',
-                        kind: 'component',
-                        metadata: {
-                            namespace: 'default',
-                            name: 'consumer-1',
-                        }
-                    }],
-                },
-                expectedRelations: [  {
-                    type: 'relation',
-                    relation: {
-                        type: 'apiConsumedBy',
-                        source: {
-                            kind: 'API',
-                            namespace: 'default',
-                            name: 'et-1',
-                        },
-                        target: {
-                            kind: 'Component',
-                            namespace: 'default',
-                            name: 'consumer-1',
-                        },
-                    },
-                },
-                    {
-                        type: 'relation',
-                        relation: {
-                            type: 'consumesApi',
-                            source: {
-                                kind: 'Component',
-                                namespace: 'default',
-                                name: 'consumer-1',
-                            },
-                            target: {
-                                kind: 'API',
-                                namespace: 'default',
-                                name: 'et-1',
-                            },
-                        },
-                    }],
             },
         ];
 
