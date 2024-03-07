@@ -14,9 +14,11 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
+    private readonly queryEntityPageLimit:number;
 
-    constructor(catalogApi:CatalogClient, logger:Logger) {
+    constructor(catalogApi:CatalogClient, logger:Logger, queryEntityPageLimit?:number) {
         this.catalogApi = catalogApi;
+        this.queryEntityPageLimit = queryEntityPageLimit ?? 10000;
 
         this.logger = logger.child({
             target: this.getProcessorName(),
@@ -98,17 +100,25 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
         // fetch the component by the id
         // example: http://localhost:7007/api/catalog/entities/by-query
         // ?filter=kind=component,metadata.namespace=default,metadata.annotations.backstage.io/kubernetes-id=fraud-detector
+        let catalogApiCursor: string | undefined;
+        let entities: Entity[] = [];
 
         try {
-            let response = await this.catalogApi.queryEntities({
-                filter: {
-                    kind: 'component',
-                    'metadata.namespace': namespace,
-                    'metadata.annotations.backstage.io/kubernetes-id': componentId,
-                },
-            });
+            do {
+                let response = await this.catalogApi.queryEntities({
+                    filter: {
+                        kind: 'component',
+                        'metadata.namespace': namespace,
+                        'metadata.annotations.backstage.io/kubernetes-id': componentId,
+                    },
+                    cursor: catalogApiCursor,
+                    limit: this.queryEntityPageLimit
+                });
+                catalogApiCursor = response.pageInfo.nextCursor;
+                entities = entities.concat(response.items);
+            } while (catalogApiCursor)
 
-            return response.items as ComponentEntity[];
+            return entities;
         } catch (e) {
             this.logger.error(`Failed to find components by backstage id ${namespace}/${componentId}: ${e}`);
             return [] as ComponentEntity[];
