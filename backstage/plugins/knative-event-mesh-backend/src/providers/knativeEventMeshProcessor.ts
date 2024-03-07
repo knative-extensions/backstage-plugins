@@ -14,6 +14,7 @@ import {TypeKnativeEvent} from "./types";
 export class KnativeEventMeshProcessor implements CatalogProcessor {
     private readonly catalogApi:CatalogClient;
     private readonly logger:Logger;
+    private catalogApiCursor;
 
     constructor(catalogApi:CatalogClient, logger:Logger) {
         this.catalogApi = catalogApi;
@@ -106,7 +107,12 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
                     'metadata.namespace': namespace,
                     'metadata.annotations.backstage.io/kubernetes-id': componentId,
                 },
+                cursor: this.catalogApiCursor
             });
+
+            if(response.pageInfo.nextCursor !== 'undefined') {
+                this.catalogApiCursor = response.pageInfo.nextCursor;
+            }
 
             return response.items as ComponentEntity[];
         } catch (e) {
