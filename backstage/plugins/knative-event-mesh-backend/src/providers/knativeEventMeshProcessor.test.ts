@@ -20,33 +20,35 @@ describe('KnativeEventMeshProcessor', () => {
 
         const processor = new KnativeEventMeshProcessor(catalogApi, logger, 5);
 
+        type Query = {
+            queryEntitiesRequest:{
+                filter:{
+                    kind:'component',
+                    'metadata.namespace':string,
+                    'metadata.annotations.backstage.io/kubernetes-id':string,
+                },
+                cursor: string|undefined;
+                limit: number
+            },
+            queryEntitiesResult: {
+               items: Entity[],
+                pageInfo: {
+                    nextCursor?: string;
+                    prevCursor?: string;
+                };
+            };
+        }
+
         type TestCase = {
             name:string;
             entity:ApiEntity;
-            query?:{
-                queryEntitiesRequest:{
-                    filter:{
-                        kind:'component',
-                        'metadata.namespace':string,
-                        'metadata.annotations.backstage.io/kubernetes-id':string,
-                    },
-                    cursor: string,
-                    limit: number
-                },
-                queryEntitiesResult: {
-                   items: Entity[],
-                    pageInfo: {
-                        nextCursor?: string;
-                        prevCursor?: string;
-                    };
-                };
-            };
+            queries?:Query[];
             expectedRelations?:CatalogProcessorRelationResult[];
         };
 
         const testCases:TestCase[] = [
             {
-                name: 'should emit relations if consumer is defined and found',
+                name: 'should not emit relations if consumer is defined but cannot be found',
                 entity: {
                     apiVersion: 'backstage.io/v1alpha1',
                     kind: 'API',
@@ -63,7 +65,46 @@ describe('KnativeEventMeshProcessor', () => {
                         type: 'eventType',
                     },
                 },
-                query: {
+                queries: [{
+                    queryEntitiesRequest: {
+                        filter: {
+                            kind: 'component',
+                            'metadata.namespace': 'default',
+                            'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
+                        },
+                        cursor:undefined,
+                        limit: 5
+                    },
+                    queryEntitiesResult: {
+                        items: [],
+                        pageInfo: {
+
+                        },
+                    }
+                }],
+                expectedRelations: [
+                ],
+            },
+            {
+                name: 'should make a 2nd call with cursor if there are more than 5 items returned and limit is 5',
+                entity: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'API',
+                    metadata: {
+                        namespace: 'default',
+                        name: 'et-1',
+                        consumedBy: ['consumer-1'],
+                    },
+                    spec: {
+                        owner: 'owner',
+                        system: 'system',
+                        lifecycle: 'lifecycle',
+                        definition: 'definition',
+                        type: 'eventType',
+                    },
+                },
+                queries: [
+                    {
                     queryEntitiesRequest: {
                         filter: {
                             kind: 'component',
@@ -71,20 +112,95 @@ describe('KnativeEventMeshProcessor', () => {
                             'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                         },
                         cursor: undefined,
-                        limit: 5
+                        limit: 5,
                     },
-                    queryEntitiesResult:{
-                        items:[{
-                            apiVersion: 'backstage.io/v1alpha1',
-                            kind: 'component',
-                            metadata: {
-                                namespace: 'default',
-                                name: 'consumer-1',
+                    queryEntitiesResult:
+                        {
+                          items: [
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                                {
+                                    apiVersion: 'backstage.io/v1alpha1',
+                                    kind: 'component',
+                                    metadata: {
+                                        namespace: 'default',
+                                        name: 'consumer-1',
+                                    },
+                                },
+                            ],
+                          pageInfo: {
+                                nextCursor: "2",
+                                prevCursor: "1"
+                           }
+                        }
+                    },
+                    {
+                        queryEntitiesRequest: {
+                            filter: {
+                                kind: 'component',
+                                'metadata.namespace': 'default',
+                                'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
                             },
-                        }],
-                        pageInfo: {}
-                    },
-                },
+                            cursor: "2",
+                            limit: 5,
+                        },
+                        queryEntitiesResult:
+                            {
+                              items: [
+                                    {
+                                        apiVersion: 'backstage.io/v1alpha1',
+                                        kind: 'component',
+                                        metadata: {
+                                            namespace: 'default',
+                                            name: 'consumer-1',
+                                        },
+                                    },
+                                    {
+                                        apiVersion: 'backstage.io/v1alpha2',
+                                        kind: 'component',
+                                        metadata: {
+                                            namespace: 'default',
+                                            name: 'consumer-1',
+                                        },
+                                    },
+                                ],
+                              pageInfo: {
+                                    nextCursor: undefined,
+                                    prevCursor: "1"
+                               }
+                            }
+                        },
+                ],
                 expectedRelations: [
                     {
                         type: 'relation',
@@ -118,172 +234,213 @@ describe('KnativeEventMeshProcessor', () => {
                             },
                         },
                     },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'apiConsumedBy',
+                            source: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                            target: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                        },
+                    },
+                    {
+                        type: 'relation',
+                        relation: {
+                            type: 'consumesApi',
+                            source: {
+                                kind: 'Component',
+                                namespace: 'default',
+                                name: 'consumer-1',
+                            },
+                            target: {
+                                kind: 'API',
+                                namespace: 'default',
+                                name: 'et-1',
+                            },
+                        },
+                    }
                 ],
-            },
-            {
-                "name": "should not emit relations if entity is not Knative Event Type",
-                entity: {
-                    apiVersion: 'backstage.io/v1alpha1',
-                    kind: 'API',
-                    metadata: {
-                        namespace: 'default',
-                        name: 'et-1',
-                    },
-                    spec: {
-                        owner: 'owner',
-                        system: 'system',
-                        lifecycle: 'lifecycle',
-                        definition: 'definition',
-                        type: 'RANDOM',
-                    },
-                },
-            },
-            {
-                "name": "should not emit relations if there's no consumer defined",
-                entity: {
-                    apiVersion: 'backstage.io/v1alpha1',
-                    kind: 'API',
-                    metadata: {
-                        namespace: 'default',
-                        name: 'et-1',
-                        consumedBy: [],
-                    },
-                    spec: {
-                        owner: 'owner',
-                        system: 'system',
-                        lifecycle: 'lifecycle',
-                        definition: 'definition',
-                        type: 'eventType',
-                    },
-                },
-            },
-            {
-                name: 'should not emit relations if consumer is defined but cannot be found',
-                entity: {
-                    apiVersion: 'backstage.io/v1alpha1',
-                    kind: 'API',
-                    metadata: {
-                        namespace: 'default',
-                        name: 'et-1',
-                        consumedBy: ['consumer-1'],
-                    },
-                    spec: {
-                        owner: 'owner',
-                        system: 'system',
-                        lifecycle: 'lifecycle',
-                        definition: 'definition',
-                        type: 'eventType',
-                    },
-                },
-                query: {
-                    queryEntitiesRequest: {
-                        filter: {
-                            kind: 'component',
-                            'metadata.namespace': 'default',
-                            'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
-                        },
-                        cursor: undefined,
-                        limit: 5
-                    },
-                    queryEntitiesResult: {
-                        items: [],
-                        pageInfo: {}
-                    },
-                },
-                expectedRelations: [],
-            },
-            {
-                name: 'should make a 2nd call with cursor if there are more than 5 items returned and limit is 5',
-                entity: {
-                    apiVersion: 'backstage.io/v1alpha1',
-                    kind: 'API',
-                    metadata: {
-                        namespace: 'default',
-                        name: 'et-1',
-                        consumedBy: ['consumer-1'],
-                    },
-                    spec: {
-                        owner: 'owner',
-                        system: 'system',
-                        lifecycle: 'lifecycle',
-                        definition: 'definition',
-                        type: 'eventType',
-                    },
-                },
-                query: {
-                    queryEntitiesRequest: {
-                        filter: {
-                            kind: 'component',
-                            'metadata.namespace': 'default',
-                            'metadata.annotations.backstage.io/kubernetes-id': 'consumer-1',
-                        },
-                        cursor: undefined,
-                        limit: 5,
-                    },
-                    queryEntitiesResult:
-                        {
-                          items: [
-                                {
-                                    apiVersion: 'backstage.io/v1alpha1',
-                                    kind: 'component',
-                                    metadata: {
-                                        namespace: 'default',
-                                        name: 'consumer-1',
-                                    },
-                                },
-                                {
-                                    apiVersion: 'backstage.io/v1alpha1',
-                                    kind: 'component',
-                                    metadata: {
-                                        namespace: 'default',
-                                        name: 'consumer-2',
-                                    },
-                                },
-                                {
-                                    apiVersion: 'backstage.io/v1alpha1',
-                                    kind: 'component',
-                                    metadata: {
-                                        namespace: 'default',
-                                        name: 'consumer-3',
-                                    },
-                                },
-                                {
-                                    apiVersion: 'backstage.io/v1alpha1',
-                                    kind: 'component',
-                                    metadata: {
-                                        namespace: 'default',
-                                        name: 'consumer-4',
-                                    },
-                                },
-                                {
-                                    apiVersion: 'backstage.io/v1alpha1',
-                                    kind: 'component',
-                                    metadata: {
-                                        namespace: 'default',
-                                        name: 'consumer-5',
-                                    },
-                                },
-                            ],
-                          pageInfo: {
-                                nextCursor: "2",
-                                prevCursor: "0"
-                           }
-                        },
-                    expectedRelations: []
-                },
             }
         ];
 
         for (const testCase of testCases) {
             it(testCase.name, async () => {
-                if (testCase.query) {
-                    let entityQueryResult = {
-                        items: testCase.query.queryEntitiesResult.items,
-                        totalItems: testCase.query.queryEntitiesResult.length,
-                        pageInfo: testCase.query.queryEntitiesResult.pageInfo
-                    };
-
-                    catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
+                if (testCase.queries) {
+                    for (const query of testCase.queries) {
+                        let entityQueryResult = {
+                            items: query.queryEntitiesResult.items,
+                            totalItems: query.queryEntitiesResult.items.length,
+                            pageInfo: query.queryEntitiesResult.pageInfo
+                        };
+                        catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
+                    }
                 }
 
                 const emitFn = jest.fn();
@@ -302,10 +459,11 @@ describe('KnativeEventMeshProcessor', () => {
 
                 expect(output).toEqual(testCase.entity);
 
-                if (testCase.query) {
-                    expect(catalogApi.queryEntities).toHaveBeenCalledTimes(testCase.query.queryEntitiesResult.pageInfo.nextCursor
-                        ? Number(testCase.query.queryEntitiesResult.pageInfo.nextCursor) : 1);
-                    expect(catalogApi.queryEntities).toHaveBeenCalledWith(testCase.query.queryEntitiesRequest);
+                if (testCase.queries) {
+                    expect(catalogApi.queryEntities).toHaveBeenCalledTimes(testCase.queries.length);
+                    for (const query of testCase.queries) {
+                        expect(catalogApi.queryEntities).toHaveBeenCalledWith(query.queryEntitiesRequest);
+                    }
                 } else {
                     expect(catalogApi.queryEntities).not.toHaveBeenCalled();
                 }
