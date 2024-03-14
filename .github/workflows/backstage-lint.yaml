@@ -6,6 +6,10 @@ on:
       - main
 
 jobs:
-  steps:
-    - name: lint all code
-      run: yarn backstage-cli repo lint
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint all code
+        shell: bash
+        working-directory: backstage
+        run: yarn backstage-cli repo lint
