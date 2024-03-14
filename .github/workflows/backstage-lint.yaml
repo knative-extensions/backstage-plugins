@@ -1,0 +1,11 @@
+name: Backstage lint
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  steps:
+    - name: lint all code
+      run: yarn backstage-cli repo lint

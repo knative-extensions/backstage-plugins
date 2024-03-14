@@ -98,3 +98,5 @@ jobs:
         run: |
           export PATH="./node_modules/.bin/:$PATH"
           yarn postpack
+      - name: lint all code
+        run: yarn backstage-cli repo lint
