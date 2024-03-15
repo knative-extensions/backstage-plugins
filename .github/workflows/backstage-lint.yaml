@@ -9,7 +9,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Lint all code
         shell: bash
-        working-directory: backstage
+        working-directory: ./backstage
         run: yarn backstage-cli repo lint
