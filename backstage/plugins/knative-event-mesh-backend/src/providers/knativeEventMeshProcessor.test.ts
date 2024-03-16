@@ -1,13 +1,13 @@
 import {getVoidLogger} from '@backstage/backend-common';
-import {CatalogClient} from "@backstage/catalog-client";
-import {ApiEntity, Entity} from "@backstage/catalog-model";
-import {CatalogProcessorRelationResult} from "@backstage/plugin-catalog-node";
+import {CatalogClient} from '@backstage/catalog-client';
+import {ApiEntity, Entity} from '@backstage/catalog-model';
+import {CatalogProcessorRelationResult} from '@backstage/plugin-catalog-node';
 import {KnativeEventMeshProcessor} from "./knativeEventMeshProcessor";
 
 // there must be a better way to do this
-const catalogApi = <any>{
+const catalogApi = ({
     queryEntities: jest.fn(),
-} as jest.Mocked<CatalogClient>;
+} as any) as jest.Mocked<CatalogClient>;
 
 beforeEach(() => {
     catalogApi.queryEntities.mockClear();
@@ -39,7 +39,7 @@ describe('KnativeEventMeshProcessor', () => {
             };
         }
 
-        type TestCase = {
+        interface TestCase  {
             name:string;
             entity:ApiEntity;
             queries?:Query[];
@@ -430,44 +430,36 @@ describe('KnativeEventMeshProcessor', () => {
             }
         ];
 
-        for (const testCase of testCases) {
-            it(testCase.name, async () => {
-                if (testCase.queries) {
-                    for (const query of testCase.queries) {
-                        let entityQueryResult = {
-                            items: query.queryEntitiesResult.items,
-                            totalItems: query.queryEntitiesResult.items.length,
-                            pageInfo: query.queryEntitiesResult.pageInfo
-                        };
-                        catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
-                    }
+        test.each(testCases)('Name:  %s', async ({name, queries, expectedRelations, entity}) => {
+            if (queries) {
+                for (const query of queries) {
+                    const entityQueryResult = {
+                        items: query.queryEntitiesResult.items,
+                        totalItems: query.queryEntitiesResult.items.length,
+                        pageInfo: query.queryEntitiesResult.pageInfo
+                    };
+                    catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
                 }
+            }
 
-                const emitFn = jest.fn();
+            const emitFn = jest.fn();
 
-                let output = await processor.preProcessEntity(testCase.entity, <any>{}, emitFn, <any>{}, <any>{});
+            const output = await processor.preProcessEntity(entity, ({} as any), emitFn, ({} as any), ({} as any));
 
-                if (!testCase.expectedRelations) {
-                    expect(emitFn).not.toHaveBeenCalled();
-                } else {
-                    expect(emitFn).toHaveBeenCalledTimes(testCase.expectedRelations.length);
-                    for (let i = 0; i < testCase.expectedRelations.length; i++) {
-                        const relation = testCase.expectedRelations[i];
-                        expect(emitFn).toHaveBeenNthCalledWith(i + 1, relation);
-                    }
-                }
+            expect(emitFn).toHaveBeenCalledTimes(expectedRelations?.length || 0);
 
-                expect(output).toEqual(testCase.entity);
-
-                if (testCase.queries) {
-                    expect(catalogApi.queryEntities).toHaveBeenCalledTimes(testCase.queries.length);
-                    for (const query of testCase.queries) {
-                        expect(catalogApi.queryEntities).toHaveBeenCalledWith(query.queryEntitiesRequest);
-                    }
-                } else {
-                    expect(catalogApi.queryEntities).not.toHaveBeenCalled();
-                }
+            expectedRelations?.forEach((relation, index) => {
+                expect(emitFn).toHaveBeenNthCalledWith(index + 1, relation);
             });
-        }
+
+            expect(output).toEqual(entity);
+
+            expect(catalogApi.queryEntities).toHaveBeenCalledTimes(queries?.length || 0);
+
+            queries?.forEach(query => {
+                expect(catalogApi.queryEntities).toHaveBeenCalledWith(query.queryEntitiesRequest);
+            });
+
+        });
     });
 });
