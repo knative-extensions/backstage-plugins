@@ -14,7 +14,7 @@ describe('KnativeEventMeshProvider', () => {
             schedule: undefined,
         };
 
-        const provider = new KnativeEventMeshProvider(providerConfig, logger, <any>null);
+        const provider = new KnativeEventMeshProvider(providerConfig, logger, (null as any));
 
         type TestCase = {
             name:string;
@@ -116,12 +116,10 @@ describe('KnativeEventMeshProvider', () => {
             }
         ];
 
-        for (const testCase of testCases) {
-            it(testCase.name, async () => {
-                const result = provider.buildEventTypeEntity(testCase.input);
-                expect(result).toEqual(testCase.expected);
-            });
-        }
+        test.each(testCases)('Name: %s', async ({name,input, expected}) => {
+            const result = provider.buildEventTypeEntity(input);
+            expect(result).toEqual(expected);
+        });
     });
 
     describe('buildBrokerEntity', () => {
@@ -131,7 +129,7 @@ describe('KnativeEventMeshProvider', () => {
             schedule: undefined,
         };
 
-        const provider = new KnativeEventMeshProvider(providerConfig, logger, <any>null);
+        const provider = new KnativeEventMeshProvider(providerConfig, logger, (null as any));
 
         type TestCase = {
             name:string;
@@ -214,11 +212,10 @@ describe('KnativeEventMeshProvider', () => {
             }
         ];
 
-        for (const testCase of testCases) {
-            it(testCase.name, async () => {
-                const result = provider.buildBrokerEntity(testCase.input);
-                expect(result).toEqual(testCase.expected);
-            });
-        }
+        test.each(testCases)('Name: %s', async ({name,input, expected}) => {
+            const result = provider.buildBrokerEntity(input);
+            expect(result).toEqual(expected);
+        });
+
     });
 });
