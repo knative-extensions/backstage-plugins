@@ -77,6 +77,9 @@ type TriggerSpec struct {
 	// Broker is the broker that this trigger receives events from.
 	Broker string `json:"broker,omitempty"`
 
+	// BrokerRef is the broker that is used for cross-namespace referencing.
+	BrokerRef *duckv1.KReference `json:"brokerRef,omitempty"`
+
 	// Filter is the filter to apply against all events from the Broker. Only events that pass this
 	// filter will be sent to the Subscriber. If not specified, will default to allowing all events.
 	//
@@ -195,6 +198,10 @@ type TriggerStatus struct {
 	// according to https://www.rfc-editor.org/rfc/rfc7468 of the receiver for this Trigger.
 	// +optional
 	SubscriberCACerts *string `json:"subscriberCACerts,omitempty"`
+
+	// SubscriberAudience is the OIDC audience of the subscriber.
+	// +optional
+	SubscriberAudience *string `json:"subscriberAudience,omitempty"`
 
 	// DeliveryStatus contains a resolved URL to the dead letter sink address, and any other
 	// resolved delivery options.
