@@ -50,6 +50,11 @@ jobs:
         working-directory: ./backstage
         run: yarn --prefer-offline --frozen-lockfile
 
+      - name: lint all code
+        shell: bash
+        working-directory: ./backstage
+        run: yarn backstage-cli repo lint
+
       - name: Install tooling
         shell: bash
         working-directory: ./backstage

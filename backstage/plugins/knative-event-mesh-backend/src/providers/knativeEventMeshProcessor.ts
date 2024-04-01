@@ -105,7 +105,7 @@ export class KnativeEventMeshProcessor implements CatalogProcessor {
 
         try {
             do {
-                let response = await this.catalogApi.queryEntities({
+                const response = await this.catalogApi.queryEntities({
                     filter: {
                         kind: 'component',
                         'metadata.namespace': namespace,
