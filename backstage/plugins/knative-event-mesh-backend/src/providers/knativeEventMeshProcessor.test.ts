@@ -44,7 +44,7 @@ describe('KnativeEventMeshProcessor', () => {
             entity:ApiEntity;
             queries?:Query[];
             expectedRelations?:CatalogProcessorRelationResult[];
-        };
+        }
 
         const testCases:TestCase[] = [
             {
@@ -430,36 +430,38 @@ describe('KnativeEventMeshProcessor', () => {
             }
         ];
 
-        test.each(testCases)('Name:  %s', async ({name, queries, expectedRelations, entity}) => {
-            if (queries) {
-                for (const query of queries) {
-                    const entityQueryResult = {
-                        items: query.queryEntitiesResult.items,
-                        totalItems: query.queryEntitiesResult.items.length,
-                        pageInfo: query.queryEntitiesResult.pageInfo
-                    };
-                    catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
+        for (const testCase of testCases) {
+            test(`Name: ${testCase.name}`, async () => {
+                if (testCase.queries) {
+                    for (const query of testCase.queries) {
+                        const entityQueryResult = {
+                            items: query.queryEntitiesResult.items,
+                            totalItems: query.queryEntitiesResult.items.length,
+                            pageInfo: query.queryEntitiesResult.pageInfo
+                        };
+                        catalogApi.queryEntities.mockReturnValueOnce(Promise.resolve(entityQueryResult));
+                    }
                 }
-            }
 
-            const emitFn = jest.fn();
+                const emitFn = jest.fn();
 
-            const output = await processor.preProcessEntity(entity, ({} as any), emitFn, ({} as any), ({} as any));
+                const output = await processor.preProcessEntity(testCase.entity, ({} as any), emitFn, ({} as any), ({} as any));
 
-            expect(emitFn).toHaveBeenCalledTimes(expectedRelations?.length || 0);
+                expect(emitFn).toHaveBeenCalledTimes(testCase.expectedRelations?.length || 0);
 
-            expectedRelations?.forEach((relation, index) => {
-                expect(emitFn).toHaveBeenNthCalledWith(index + 1, relation);
+                testCase.expectedRelations?.forEach((relation, index) => {
+                    expect(emitFn).toHaveBeenNthCalledWith(index + 1, relation);
+                });
+
+                expect(output).toEqual(testCase.entity);
+
+                expect(catalogApi.queryEntities).toHaveBeenCalledTimes(testCase.queries?.length || 0);
+
+                testCase.queries?.forEach(query => {
+                    expect(catalogApi.queryEntities).toHaveBeenCalledWith(query.queryEntitiesRequest);
+                });
             });
+        }
 
-            expect(output).toEqual(entity);
-
-            expect(catalogApi.queryEntities).toHaveBeenCalledTimes(queries?.length || 0);
-
-            queries?.forEach(query => {
-                expect(catalogApi.queryEntities).toHaveBeenCalledWith(query.queryEntitiesRequest);
-            });
-
-        });
     });
 });
