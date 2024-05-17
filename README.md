@@ -1,4 +1,6 @@
 # Knative Backstage Plugins
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fknative-extensions%2Fbackstage-plugins.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fknative-extensions%2Fbackstage-plugins?ref=badge_shield)
+
 
 This repository contains a set of Backstage plugins for Knative and their respective backends.
 
@@ -206,3 +208,7 @@ act -j '<job name>'
 # if having issues on Apple Silicon, use:
 # act --rm --container-architecture linux/amd64 -j 'publish-release-snapshot-on-npm'
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fknative-extensions%2Fbackstage-plugins.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fknative-extensions%2Fbackstage-plugins?ref=badge_large)
