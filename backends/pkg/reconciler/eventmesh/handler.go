@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/rest"
 	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"knative.dev/pkg/logging"
+	"log"
 	"net/http"
 	"sort"
 
@@ -14,14 +17,11 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 
 	"k8s.io/apimachinery/pkg/util/json"
-
-	"knative.dev/pkg/logging"
 )
 
 // EventMesh is the top-level struct that holds the event mesh data.
@@ -43,12 +43,18 @@ type EventMesh struct {
 const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
 
 // HttpHandler is the HTTP handler that's used to serve the event mesh data.
-func HttpHandler(ctx context.Context, clientset *versioned.Clientset) func(w http.ResponseWriter, req *http.Request) {
+func HttpHandler(ctx context.Context, config *rest.Config) func(w http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(ctx)
 
 	// this handler simply calls the event mesh builder and returns the result as JSON
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
+
+		config.BearerToken = req.Header.Get("Authorization")
+		clientset, err := versioned.NewForConfig(config)
+		if err != nil {
+			log.Fatalf("Error creating clientset: %v", err)
+		}
 
 		eventMesh, err := BuildEventMesh(ctx, clientset, logger)
 		if err != nil {
@@ -72,7 +78,7 @@ func HttpHandler(ctx context.Context, clientset *versioned.Clientset) func(w htt
 // - Do the same for event types.
 // - Fetch the triggers, find out what event types they're subscribed to and find out the resources that are receiving the events.
 // - Make a connection between the event types and the subscribers. Store this connection in the eventType struct.
-func BuildEventMesh(ctx context.Context, clientset *versioned.Clientset, logger *zap.SugaredLogger) (EventMesh, error) {
+func BuildEventMesh(ctx context.Context, clientset versioned.Interface, logger *zap.SugaredLogger) (EventMesh, error) {
 	// fetch the brokers and convert them to the representation that's consumed by the Backstage plugin.
 	convertedBrokers, err := fetchBrokers(clientset, logger)
 	if err != nil {
@@ -105,8 +111,7 @@ func BuildEventMesh(ctx context.Context, clientset *versioned.Clientset, logger 
 	}
 
 	// fetch the triggers we will process them later
-	triggers, err := clientset.EventingV1().Triggers("default").List(context.Background(),
-		metav1.ListOptions{LabelSelector: labels.Everything().String()})
+	triggers, err := clientset.EventingV1().Triggers("default").List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
@@ -232,7 +237,7 @@ func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, et
 }
 
 // fetchBrokers fetches the brokers and converts them to the representation that's consumed by the Backstage plugin.
-func fetchBrokers(clientset *versioned.Clientset, logger *zap.SugaredLogger) ([]*Broker, error) {
+func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*Broker, error) {
 	brokers, err := clientset.EventingV1().Brokers("default").List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
@@ -249,7 +254,7 @@ func fetchBrokers(clientset *versioned.Clientset, logger *zap.SugaredLogger) ([]
 }
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.
-func fetchEventTypes(clientset *versioned.Clientset, logger *zap.SugaredLogger) ([]*EventType, error) {
+func fetchEventTypes(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*EventType, error) {
 	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logger.Errorw("Error listing eventTypes", "error", err)

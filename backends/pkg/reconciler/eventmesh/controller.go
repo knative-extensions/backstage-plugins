@@ -3,7 +3,6 @@ package eventmesh
 import (
 	"context"
 	"k8s.io/client-go/rest"
-	"knative.dev/eventing/pkg/client/clientset/versioned"
 	"log"
 	"net/http"
 
@@ -66,12 +65,7 @@ func startWebServer(ctx context.Context, listers Listers) {
 		log.Fatalf("Error getting in-cluster config: %v", err)
 	}
 
-	clientset, err := versioned.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Error creating clientset: %v", err)
-	}
-
-	r.HandleFunc("/", HttpHandler(ctx, clientset)).Methods("GET")
+	r.HandleFunc("/", HttpHandler(ctx, config)).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
