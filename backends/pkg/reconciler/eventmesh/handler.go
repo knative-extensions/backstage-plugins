@@ -255,7 +255,7 @@ func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.
 func fetchEventTypes(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*EventType, error) {
-	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes("").List(context.Background(), metav1.ListOptions{})
+	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes("default").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logger.Errorw("Error listing eventTypes", "error", err)
 		return nil, err
