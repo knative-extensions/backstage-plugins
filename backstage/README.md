@@ -11,7 +11,8 @@ yarn dev
 
 ## Ingress Configuration
 
-To access Backstage over ingress, follow changings have to be done in `app-config.yaml`:
+To access Backstage over ingress, let's say a domain like `backstage.dev-cluster.example.com`, following changes have 
+to be done in `app-config.yaml`:
 ```
 app:
   title: Scaffolded Backstage App
@@ -51,5 +52,5 @@ backend:
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
   ```
 
-Once the ingress rules are created in the kubernetes cluster based on the ingress driver, the Backstage App can then be accessed
-over the browser at 
+Once the ingress rules are created in the kubernetes cluster based on the ingress driver, the Backstage App can 
+then be accessed over the browser at `http://backstage.dev-cluster.example.com:3000`.
