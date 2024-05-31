@@ -181,17 +181,16 @@ yarn install --frozen-lockfile
 
 The default configuration of the plugin is to use the backend at `http://localhost:8080`.
 
-[Start](#running-the-backend) and proxy the backend service:
-```bash
-# proxy the backend service
-kubectl port-forward -n knative-eventing svc/eventmesh-backend 8080:8080
-```
-
-Then, start the backstage instance:
+Ensure the [backend](#running-the-backend) is running, and then, start the Backstage instance:
 ```bash
 cd ./backstage
 yarn dev
 ```
+
+By default, Backstage App can be accessed at `http://localhost:3000`.
+
+If Backstage App is running as a kubernetes deployment, it could be accessed over ingress by doing changes specified 
+[here](./backstage/README.md).
 
 #### Testing GitHub Actions
 
