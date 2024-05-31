@@ -1,0 +1,47 @@
+{
+  "name": "@knative-extensions/plugin-knative-event-mesh-backend-dynamic",
+  "version": "0.0.0-nightly",
+  "main": "dist/index.cjs.js",
+  "types": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "main": "dist/index.cjs.js",
+    "types": "dist/index.d.ts"
+  },
+  "backstage": {
+    "role": "backend-plugin"
+  },
+  "scripts": {},
+  "dependencies": {
+    "@types/express": "*",
+    "express": "^4.17.1",
+    "express-promise-router": "^4.1.0",
+    "node-fetch": "^2.6.7",
+    "winston": "^3.2.1",
+    "yn": "^4.0.0"
+  },
+  "devDependencies": {},
+  "files": [
+    "dist"
+  ],
+  "bundleDependencies": true,
+  "peerDependencies": {
+    "@backstage/backend-common": "^0.19.9",
+    "@backstage/backend-tasks": "^0.5.21",
+    "@backstage/config": "^1.1.1",
+    "@backstage/plugin-catalog-common": "^1.0.22",
+    "@backstage/catalog-client": "^1.4.6",
+    "@backstage/catalog-model": "^1.4.5",
+    "@backstage/plugin-catalog-node": "^1.11.0"
+  },
+  "overrides": {
+    "@aws-sdk/util-utf8-browser": {
+      "@smithy/util-utf8": "^2.0.0"
+    }
+  },
+  "resolutions": {
+    "@aws-sdk/util-utf8-browser": "npm:@smithy/util-utf8@~2"
+  }
+}

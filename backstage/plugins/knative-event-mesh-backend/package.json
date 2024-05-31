@@ -20,7 +20,8 @@
     "test": "backstage-cli package test",
     "clean": "backstage-cli package clean",
     "prepack": "backstage-cli package prepack",
-    "postpack": "backstage-cli package postpack"
+    "postpack": "backstage-cli package postpack",
+    "export-dynamic": "npx janus-cli package export-dynamic-plugin --embed-as-dependencies"
   },
   "dependencies": {
     "@backstage/backend-common": "^0.19.9",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@backstage/cli": "^0.24.0",
+    "@janus-idp/cli": "^1.8.7",
     "@types/supertest": "^2.0.12",
     "msw": "^1.0.0",
     "supertest": "^6.2.4"
