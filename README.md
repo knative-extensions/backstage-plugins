@@ -189,8 +189,8 @@ yarn dev
 
 By default, Backstage App can be accessed at `http://localhost:3000`.
 
-If Backstage App is running as a kubernetes deployment, it could be accessed over ingress by doing changes specified 
-[here](./backstage/README.md).
+If Backstage App is running as a Kubernetes deployment, it could be accessed over ingress by doing changes specified 
+[here](./backstage/README.md#ingress-configuration).
 
 #### Testing GitHub Actions
 
