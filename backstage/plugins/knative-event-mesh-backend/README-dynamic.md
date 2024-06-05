@@ -1,4 +1,4 @@
-# Knative Event Mesh plugin
+# Knative Event Mesh plugin (dynamic)
 
 The Event Mesh plugin is a Backstage plugin that allows you to view and manage Knative Eventing resources.
 
@@ -7,7 +7,27 @@ API server.
 
 A demo setup for this plugin is available at https://github.com/aliok/knative-backstage-demo.
 
+For more information about the plugin, please see
+the [GitHub repository](https://github.com/knative-extensions/backstage-plugins/blob/main/backstage/plugins/knative-event-mesh-backend/README.md).
+
+This distribution of the plugin is a dynamic plugin that can be installed in a Backstage instance that supports dynamic
+plugins.
+
+Backstage has a [WIP proposal](https://github.com/backstage/backstage/tree/master/beps/0002-dynamic-frontend-plugins) to
+allow plugins to be loaded dynamically. While this is not done in upstream Backstage
+yet, [Janus IDP](https://janus-idp.io/) has implemented this feature.
+The benefit of the dynamic plugin is it can be used without changing the source code of Backstage.
+
 ## Installation
+
+### Prerequisites
+
+- A Kubernetes cluster with Knative Eventing installed
+- Knative Event Mesh plugin backend installed
+- A Backstage instance with dynamic plugin support (e.g. [Janus IDP](https://janus-idp.io/))
+- A service account for the Backstage backend to access the Kubernetes API
+
+Install Knative Eventing by following the [official documentation](https://knative.dev/docs/install/).
 
 Install the backend and the relevant configuration in the Kubernetes cluster
 
@@ -15,13 +35,22 @@ Install the backend and the relevant configuration in the Kubernetes cluster
 kubectl apply -f https://github.com/knative-extensions/backstage-plugins/releases/download/v0.1.0/eventmesh.yaml
 ```
 
-In your Backstage directory, run the following command to install the plugin:
+## Janus Configuration
+
+You need to follow the Janus IDP dynamic plugin installation instructions
+here: https://github.com/janus-idp/backstage-showcase/blob/main/showcase-docs/dynamic-plugins.md#installing-a-dynamic-plugin-package-in-the-showcase
+
+For a quick test, download the plugin package and extract it to the `dynamic-plugins-root` directory in Janus IDP:
 
 ```bash
-yarn workspace backend add @knative-extensions/plugin-knative-event-mesh-backend
+cd <path-to-Janus-IDP>/dynamic-plugins-root
+pkg=@knative-extensions/plugin-knative-event-mesh-backend-dynamic
+pkg=@knative-extensions/plugin-knative-event-mesh-backend-dynamic
+pkg=@aliok/plugin-knative-event-mesh-backend-dynamic
+archive=$(npm pack $pkg)
+tar -xzf "$archive" && rm "$archive"
+mv package $(echo $archive | sed -e 's:\.tgz$::')
 ```
-
-## Configuration
 
 > **NOTE**: The backend needs to be accessible from the Backstage instance. If you are running the backend without
 > exposing it, you can use `kubectl port-forward` to forward the port of the backend service to your local machine.
@@ -37,6 +66,7 @@ Use a `knativeEventMesh` marker to start configuring the `app-config.yaml` file 
 
 ```yaml
 catalog:
+  ...
   providers:
     knativeEventMesh:
       dev:
@@ -48,43 +78,7 @@ catalog:
           timeout: { minutes: 1 }
 ```
 
-Configure the scheduler for the entity provider and enable the processor. Add the following code
-to `packages/backend/src/plugins/catalog.ts` file:
-
-```ts
-import {CatalogClient} from "@backstage/catalog-client";
-import {
-    KnativeEventMeshProcessor,
-    KnativeEventMeshProvider
-} from '@knative-extensions/plugin-knative-event-mesh-backend';
-
-export default async function createPlugin(
-    env:PluginEnvironment,
-):Promise<Router> {
-    const builder = await CatalogBuilder.create(env);
-
-    /* ... other processors and/or providers ... */
-
-    // ADD THESE
-    builder.addEntityProvider(
-        KnativeEventMeshProvider.fromConfig(env.config, {
-            logger: env.logger,
-            scheduler: env.scheduler,
-        }),
-    );
-    const catalogApi = new CatalogClient({
-        discoveryApi: env.discovery,
-    });
-    const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi, env.logger);
-    builder.addProcessor(knativeEventMeshProcessor);
-
-    /* ... other processors and/or providers ... */
-
-    const {processingEngine, router} = await builder.build();
-    await processingEngine.start();
-    return router;
-}
-```
+Start your Janus IDP instance!
 
 > **NOTE**: If you have made any changes to the schedule in the `app-config.yaml` file, then restart to apply the
 > changes.
@@ -96,13 +90,3 @@ When you start your Backstage application, you can see some log lines as follows
 ```text
 [1] 2024-01-04T09:38:08.707Z knative-event-mesh-backend info Found 1 knative event mesh provider configs with ids: dev type=plugin
 ```
-
-## Usage
-
-The plugin will register a few entities in the Backstage catalog.
-
-Screenshots:
-
-- ![Event Mesh plugin](./event-mesh-plugin-components-view.png)
-
-- ![Event Mesh plugin](./event-mesh-plugin-apis-view.png)
