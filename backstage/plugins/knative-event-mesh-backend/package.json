@@ -36,7 +36,7 @@
     "clean": "backstage-cli package clean",
     "prepack": "backstage-cli package prepack",
     "postpack": "backstage-cli package postpack",
-    "export-dynamic": "npx janus-cli package export-dynamic-plugin --embed-as-dependencies"
+    "export-dynamic": "npx janus-cli package export-dynamic-plugin --embed-as-dependencies && cp README.md dist-dynamic/README.md"
   },
   "dependencies": {
     "@backstage/backend-common": "^0.19.9",
