@@ -1,5 +1,5 @@
 import {getVoidLogger} from '@backstage/backend-common';
-import {CatalogClient} from '@backstage/catalog-client';
+import {CatalogApi} from '@backstage/catalog-client';
 import {ApiEntity, Entity} from '@backstage/catalog-model';
 import {CatalogProcessorRelationResult} from '@backstage/plugin-catalog-node';
 import {KnativeEventMeshProcessor} from "./knativeEventMeshProcessor";
@@ -7,7 +7,7 @@ import {KnativeEventMeshProcessor} from "./knativeEventMeshProcessor";
 // there must be a better way to do this
 const catalogApi = ({
     queryEntities: jest.fn(),
-} as any) as jest.Mocked<CatalogClient>;
+} as any) as jest.Mocked<CatalogApi>;
 
 beforeEach(() => {
     catalogApi.queryEntities.mockClear();

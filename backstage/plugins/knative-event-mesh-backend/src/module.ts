@@ -3,10 +3,15 @@ import {
     coreServices,
     createBackendModule,
 } from '@backstage/backend-plugin-api';
-import {CatalogClient} from "@backstage/catalog-client";
-import {catalogProcessingExtensionPoint} from '@backstage/plugin-catalog-node/alpha';
+import { 
+    catalogServiceRef,
+    catalogProcessingExtensionPoint
+} from '@backstage/plugin-catalog-node/alpha';
 
-import {KnativeEventMeshProcessor, KnativeEventMeshProvider} from './providers';
+import { 
+    KnativeEventMeshProcessor, 
+    KnativeEventMeshProvider
+} from './providers';
 
 export const catalogModuleKnativeEventMesh = createBackendModule({
     moduleId: 'knative-event-mesh-module',
@@ -14,22 +19,18 @@ export const catalogModuleKnativeEventMesh = createBackendModule({
     register(env) {
         env.registerInit({
             deps: {
+                catalogApi: catalogServiceRef,
                 catalog: catalogProcessingExtensionPoint,
                 config: coreServices.rootConfig,
                 logger: coreServices.logger,
                 scheduler: coreServices.scheduler,
-                discovery: coreServices.discovery,
             },
-            async init({catalog, config, logger, scheduler, discovery}) {
+            async init({ catalogApi, catalog, config, logger, scheduler }) {
                 const knativeEventMeshProviders = KnativeEventMeshProvider.fromConfig(config, {
                     logger: loggerToWinstonLogger(logger),
                     scheduler: scheduler,
                 });
                 catalog.addEntityProvider(knativeEventMeshProviders);
-
-                const catalogApi = new CatalogClient({
-                    discoveryApi: discovery,
-                });
 
                 const knativeEventMeshProcessor = new KnativeEventMeshProcessor(catalogApi, loggerToWinstonLogger(logger));
                 catalog.addProcessor(knativeEventMeshProcessor);

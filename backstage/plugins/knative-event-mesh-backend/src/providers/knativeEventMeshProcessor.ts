@@ -1,4 +1,4 @@
-import {CatalogClient} from '@backstage/catalog-client';
+import {CatalogApi} from '@backstage/catalog-client';
 import {ComponentEntity, Entity} from '@backstage/catalog-model';
 import {LocationSpec} from '@backstage/plugin-catalog-common';
 import {
@@ -12,11 +12,11 @@ import {TypeKnativeEvent} from "./types";
 
 
 export class KnativeEventMeshProcessor implements CatalogProcessor {
-    private readonly catalogApi:CatalogClient;
+    private readonly catalogApi: CatalogApi;
     private readonly logger:Logger;
     private readonly queryEntityPageLimit:number;
 
-    constructor(catalogApi:CatalogClient, logger:Logger, queryEntityPageLimit?:number) {
+    constructor(catalogApi:CatalogApi, logger:Logger, queryEntityPageLimit?:number) {
         this.catalogApi = catalogApi;
         this.queryEntityPageLimit = queryEntityPageLimit ?? 10000;
 
