@@ -54,6 +54,9 @@
     "@types/luxon": "^2.0.4"
   },
   "files": [
-    "dist"
+    "dist",
+    "dist-dynamic/*.*",
+    "dist-dynamic/dist/**",
+    "dist-dynamic/alpha/*"
   ]
 }

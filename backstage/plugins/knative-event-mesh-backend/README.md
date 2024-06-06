@@ -7,6 +7,19 @@ API server.
 
 A demo setup for this plugin is available at https://github.com/aliok/knative-backstage-demo.
 
+## Dynamic vs static plugin
+
+This plugin has 2 distributions: static and dynamic.
+
+The static distribution is a regular Backstage plugin that requires
+the source code of Backstage to be changed.
+
+The dynamic distribution is a plugin that can be installed without changing
+the source code of Backstage. If you would like to use the dynamic plugin, please see the instructions in the
+[Dynamic Plugin README file](./dist-dynamic/README.md).
+
+Rest of this documentation is for the static plugin.
+
 ## Installation
 
 Install the backend and the relevant configuration in the Kubernetes cluster
