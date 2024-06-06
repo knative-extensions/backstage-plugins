@@ -60,12 +60,17 @@ func startWebServer(ctx context.Context, listers Listers) {
 	r := mux.NewRouter()
 	r.Use(commonMiddleware)
 
-	config, err := rest.InClusterConfig()
+	noTokenConfig, err := rest.InClusterConfig()
+	noTokenConfig.BearerToken = ""
+	noTokenConfig.Username = ""
+	noTokenConfig.Password = ""
+	noTokenConfig.BearerTokenFile = ""
+
 	if err != nil {
 		log.Fatalf("Error getting in-cluster config: %v", err)
 	}
 
-	r.HandleFunc("/", HttpHandler(ctx, config)).Methods("GET")
+	r.HandleFunc("/", HttpHandler(ctx, noTokenConfig)).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", r))

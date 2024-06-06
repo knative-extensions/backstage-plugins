@@ -43,13 +43,14 @@ type EventMesh struct {
 const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
 
 // HttpHandler is the HTTP handler that's used to serve the event mesh data.
-func HttpHandler(ctx context.Context, config *rest.Config) func(w http.ResponseWriter, req *http.Request) {
+func HttpHandler(ctx context.Context, inClusterConfig *rest.Config) func(w http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(ctx)
 
 	// this handler simply calls the event mesh builder and returns the result as JSON
 	return func(w http.ResponseWriter, req *http.Request) {
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
+		config := rest.CopyConfig(inClusterConfig)
 		config.BearerToken = req.Header.Get("Authorization")
 		clientset, err := versioned.NewForConfig(config)
 		if err != nil {
@@ -111,7 +112,7 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, logger *
 	}
 
 	// fetch the triggers we will process them later
-	triggers, err := clientset.EventingV1().Triggers("default").List(context.Background(), metav1.ListOptions{})
+	triggers, err := clientset.EventingV1().Triggers(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
@@ -238,7 +239,7 @@ func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, et
 
 // fetchBrokers fetches the brokers and converts them to the representation that's consumed by the Backstage plugin.
 func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*Broker, error) {
-	brokers, err := clientset.EventingV1().Brokers("default").List(context.Background(), metav1.ListOptions{})
+	brokers, err := clientset.EventingV1().Brokers(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 
 	if err != nil {
 		logger.Errorw("Error listing brokers", "error", err)
@@ -255,7 +256,7 @@ func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.
 func fetchEventTypes(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*EventType, error) {
-	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes("default").List(context.Background(), metav1.ListOptions{})
+	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logger.Errorw("Error listing eventTypes", "error", err)
 		return nil, err
