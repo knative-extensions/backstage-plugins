@@ -6294,6 +6294,7 @@
   dependencies:
     "@backstage/backend-common" "^0.19.9"
     "@backstage/backend-dynamic-feature-service" "^0.2.9"
+    "@backstage/backend-plugin-api" "^0.6.18"
     "@backstage/backend-tasks" "^0.5.21"
     "@backstage/catalog-client" "^1.4.6"
     "@backstage/catalog-model" "^1.4.5"
@@ -9985,7 +9986,7 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.7.tgz#50ae4353eaaddc04044279812f52c8c65857dbcb"
   integrity sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==
 
-"@types/react-dom@*", "@types/react-dom@<18.0.0":
+"@types/react-dom@*", "@types/react-dom@<18.0.0", "@types/react-dom@^17":
   version "17.0.25"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-17.0.25.tgz#e0e5b3571e1069625b3a3da2b279379aa33a0cb5"
   integrity sha512-urx7A7UxkZQmThYA4So0NelOVjx3V4rNFVJwp0WZlbIK5eM4rNJDiN3R/E9ix0MBh6kAEojk/9YL+Te6D9zHNA==

@@ -61,6 +61,8 @@ catalog:
           timeout: { minutes: 1 }
 ```
 
+### Legacy Backend Installation
+
 Configure the scheduler for the entity provider and enable the processor. Add the following code
 to `packages/backend/src/plugins/catalog.ts` file:
 
@@ -97,6 +99,21 @@ export default async function createPlugin(
     await processingEngine.start();
     return router;
 }
+```
+
+### New Backend Installation
+
+To install on the new backend system, add the following into the `packages/backend/index.ts` file:
+
+```ts title=packages/backend/index.ts
+import { createBackend } from '@backstage/backend-defaults';
+
+const backend = const backend = createBackend();
+
+// Other plugins/modules
+
+backend.add(import('@knative-extensions/plugin-knative-event-mesh-backend/alpha'));
+
 ```
 
 > **NOTE**: If you have made any changes to the schedule in the `app-config.yaml` file, then restart to apply the
