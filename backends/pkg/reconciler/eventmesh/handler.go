@@ -3,14 +3,15 @@ package eventmesh
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"sort"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/rest"
 	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 	"knative.dev/pkg/logging"
-	"log"
-	"net/http"
-	"sort"
 
 	"knative.dev/pkg/injection/clients/dynamicclient"
 

@@ -2,9 +2,10 @@ package eventmesh
 
 import (
 	"context"
-	"k8s.io/client-go/rest"
 	"log"
 	"net/http"
+
+	"k8s.io/client-go/rest"
 
 	"github.com/gorilla/mux"
 
