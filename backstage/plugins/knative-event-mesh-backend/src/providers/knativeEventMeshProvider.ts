@@ -52,7 +52,7 @@ type EventMesh = {
 export async function getEventMesh(baseUrl: string, token: string | undefined):Promise<EventMesh> {
     const response = await fetch(`${baseUrl}`, {
         headers: {
-            'Authorization': `${token}`
+            'Authorization': `Bearer ${token}`
         }
     });
 
