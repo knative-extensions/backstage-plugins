@@ -2,8 +2,9 @@ package eventmesh
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/types"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/client-go/dynamic/fake"
 	"knative.dev/pkg/injection/clients/dynamicclient"
