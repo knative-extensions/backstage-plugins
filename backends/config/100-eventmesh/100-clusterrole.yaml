@@ -20,18 +20,6 @@ rules:
       - list
       - watch
 
-  # permissions for eventtypes, brokers and triggers
-  - apiGroups:
-      - "eventing.knative.dev"
-    resources:
-      - brokers
-      - eventtypes
-      - triggers
-    verbs:
-      - get
-      - list
-      - watch
-
   # permissions for leader election
   - apiGroups:
       - "coordination.k8s.io"
