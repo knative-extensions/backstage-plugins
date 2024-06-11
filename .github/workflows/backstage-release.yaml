@@ -103,3 +103,17 @@ jobs:
         run: |
           export PATH="./node_modules/.bin/:$PATH"
           yarn postpack
+
+      - name: Export knative-event-mesh-backend dynamic plugin
+        shell: bash
+        working-directory: ./backstage/plugins/knative-event-mesh-backend
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn export-dynamic
+
+      - name: Publish knative-event-mesh-backend dynamic plugin
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+          package: backstage/plugins/knative-event-mesh-backend/dist-dynamic
