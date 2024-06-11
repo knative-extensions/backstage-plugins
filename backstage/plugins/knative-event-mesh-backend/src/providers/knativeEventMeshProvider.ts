@@ -80,6 +80,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
     ):KnativeEventMeshProvider[] {
         const providerConfigs = readKnativeEventMeshProviderConfigs(configRoot);
 
+        if (configRoot.getConfig('token') === undefined) {
+            throw new Error('sa token must be provided.');
+        }
+
         if (!options.schedule && !options.scheduler) {
             throw new Error('Either schedule or scheduler must be provided.');
         }
