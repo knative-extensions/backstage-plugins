@@ -163,7 +163,7 @@ curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KUBE_API_SERVER_URL}
 # But, should not see an error
 ```
 
-Run a second sanity check to see if the token works with the backend
+Run a second quick check to see if the token works with the backend
 
 ```bash
 KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080 # or the URL of the backend
