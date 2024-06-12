@@ -52,7 +52,18 @@ func HttpHandler(ctx context.Context, inClusterConfig *rest.Config) func(w http.
 		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
 		config := rest.CopyConfig(inClusterConfig)
-		config.BearerToken = req.Header.Get("Authorization")
+		authHeader := req.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+			return
+		}
+		// header value is in this format: "Bearer <token>"
+		// we only need the token part
+		if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+			http.Error(w, "Invalid Authorization header. Should start with `Bearer `", http.StatusUnauthorized)
+			return
+		}
+		config.BearerToken = authHeader[7:]
 		clientset, err := versioned.NewForConfig(config)
 		if err != nil {
 			log.Fatalf("Error creating clientset: %v", err)
