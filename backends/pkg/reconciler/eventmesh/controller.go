@@ -9,50 +9,20 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"knative.dev/pkg/controller"
 	"knative.dev/pkg/logging"
-
-	eventtypereconciler "knative.dev/eventing/pkg/client/injection/reconciler/eventing/v1beta2/eventtype"
-
-	brokerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/broker"
-	triggerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/trigger"
-	eventtypeinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1beta2/eventtype"
-
-	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
-	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 )
 
-type Listers struct {
-	EventTypeLister eventinglistersv1beta2.EventTypeLister
-	BrokerLister    eventinglistersv1.BrokerLister
-	TriggerLister   eventinglistersv1.TriggerLister
-}
-
-func NewController(ctx context.Context) *controller.Impl {
-
-	reconciler := &Reconciler{}
+func NewController(ctx context.Context) {
 
 	logger := logging.FromContext(ctx)
 
 	logger.Infow("Starting eventmesh-backend controller")
 
-	// shared main does all the injection and starts the controller
-	// thus, we want to use it.
-	// and, it wants a controller.Impl, so, we're just returning one that's not really used in reality.
-	impl := eventtypereconciler.NewImpl(ctx, reconciler)
-
-	listers := Listers{
-		EventTypeLister: eventtypeinformer.Get(ctx).Lister(),
-		BrokerLister:    brokerinformer.Get(ctx).Lister(),
-		TriggerLister:   triggerinformer.Get(ctx).Lister(),
-	}
-
-	go startWebServer(ctx, listers)
-
-	return impl
+	// TODO: does not stop with SIGTERM
+	startWebServer(ctx)
 }
 
-func startWebServer(ctx context.Context, listers Listers) {
+func startWebServer(ctx context.Context) {
 
 	logger := logging.FromContext(ctx)
 
