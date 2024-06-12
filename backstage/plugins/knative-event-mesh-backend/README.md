@@ -176,7 +176,7 @@ curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KNATIVE_EVENT_MESH_B
 #}
 ```
 
-If these sanity checks work, you can use the token in the `app-config.yaml` file as the value
+If these quick checks work, you can use the token in the `app-config.yaml` file as the value
 of `KNATIVE_EVENT_MESH_TOKEN`.
 
 ### Legacy Backend Installation
