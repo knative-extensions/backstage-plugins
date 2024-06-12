@@ -153,7 +153,7 @@ To get the token, you can run the following command:
 kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode
 ```
 
-Run a sanity check to see if the token works:
+Run a quick check to see if the token works:
 
 ```bash
 export KUBE_API_SERVER_URL=$(kubectl config view --minify --output jsonpath="{.clusters[*].cluster.server}") # e.g. "https://192.168.2.151:16443"
