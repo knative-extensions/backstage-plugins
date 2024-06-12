@@ -52,13 +52,6 @@ tar -xzf "$archive" && rm "$archive"
 mv package $(echo $archive | sed -e 's:\.tgz$::')
 ```
 
-> **NOTE**: The backend needs to be accessible from the Backstage instance. If you are running the backend without
-> exposing it, you can use `kubectl port-forward` to forward the port of the backend service to your local machine.
-> ```bash
-> kubectl port-forward -n knative-eventing svc/eventmesh-backend 8080:8080
-> ```
-
-
 The plugin needs to be configured to talk to the backend. It can be configured in the `app-config.yaml` file of the
 Backstage instance and allows configuration of one or multiple providers.
 
@@ -70,13 +63,18 @@ catalog:
   providers:
     knativeEventMesh:
       dev:
-        baseUrl: 'http://localhost:8080' # URL of the backend installed in the cluster
+        token: '${KNATIVE_EVENT_MESH_TOKEN}'     # SA token to authenticate to the backend
+        baseUrl: '${KNATIVE_EVENT_MESH_BACKEND}' # URL of the backend installed in the cluster
         schedule: # optional; same options as in TaskScheduleDefinition
           # supports cron, ISO duration, "human duration" as used in code
           frequency: { minutes: 1 }
           # supports ISO duration, "human duration" as used in code
           timeout: { minutes: 1 }
 ```
+
+Please see
+the [README](https://github.com/knative-extensions/backstage-plugins/blob/main/backstage/plugins/knative-event-mesh-backend/README.md#configuration)
+for the static plugin for more information about the configuration requirements.
 
 Start your Janus IDP instance!
 
