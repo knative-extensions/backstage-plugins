@@ -81,7 +81,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
         const providerConfigs = readKnativeEventMeshProviderConfigs(configRoot);
 
         if (configRoot.getConfig('token') === undefined) {
-            throw new Error('sa token must be provided.');
+            throw new Error('Service account token must be provided.');
         }
 
         if (!options.schedule && !options.scheduler) {
