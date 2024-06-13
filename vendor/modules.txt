@@ -17,9 +17,6 @@ github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/blang/semver/v4 v4.0.0
-## explicit; go 1.14
-github.com/blang/semver/v4
 # github.com/blendle/zapdriver v1.3.1
 ## explicit; go 1.12
 github.com/blendle/zapdriver
@@ -53,6 +50,7 @@ github.com/cloudevents/sdk-go/v2
 github.com/cloudevents/sdk-go/v2/binding
 github.com/cloudevents/sdk-go/v2/binding/format
 github.com/cloudevents/sdk-go/v2/binding/spec
+github.com/cloudevents/sdk-go/v2/binding/transformer
 github.com/cloudevents/sdk-go/v2/client
 github.com/cloudevents/sdk-go/v2/context
 github.com/cloudevents/sdk-go/v2/event
@@ -64,6 +62,9 @@ github.com/cloudevents/sdk-go/v2/protocol
 github.com/cloudevents/sdk-go/v2/protocol/http
 github.com/cloudevents/sdk-go/v2/test
 github.com/cloudevents/sdk-go/v2/types
+# github.com/coreos/go-oidc/v3 v3.6.0
+## explicit; go 1.19
+github.com/coreos/go-oidc/v3/oidc
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -77,6 +78,11 @@ github.com/evanphx/json-patch
 # github.com/evanphx/json-patch/v5 v5.7.0
 ## explicit; go 1.18
 github.com/evanphx/json-patch/v5
+# github.com/go-jose/go-jose/v3 v3.0.0
+## explicit; go 1.12
+github.com/go-jose/go-jose/v3
+github.com/go-jose/go-jose/v3/cipher
+github.com/go-jose/go-jose/v3/json
 # github.com/go-kit/log v0.2.1
 ## explicit; go 1.17
 github.com/go-kit/log
@@ -141,14 +147,17 @@ github.com/google/mako/spec/proto/mako_go_proto
 # github.com/google/uuid v1.4.0
 ## explicit
 github.com/google/uuid
-# github.com/gorilla/mux v1.8.1
-## explicit; go 1.20
-github.com/gorilla/mux
 # github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 ## explicit; go 1.17
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
+# github.com/hashicorp/go-cleanhttp v0.5.1
+## explicit
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.6.7
+## explicit; go 1.13
+github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/golang-lru v1.0.2
 ## explicit; go 1.12
 github.com/hashicorp/golang-lru
@@ -262,11 +271,6 @@ go.opencensus.io/trace/tracestate
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic
-# go.uber.org/automaxprocs v1.5.3
-## explicit; go 1.18
-go.uber.org/automaxprocs/internal/cgroups
-go.uber.org/automaxprocs/internal/runtime
-go.uber.org/automaxprocs/maxprocs
 # go.uber.org/multierr v1.10.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -283,6 +287,9 @@ go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest
+# golang.org/x/crypto v0.16.0
+## explicit; go 1.18
+golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.14.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp
@@ -460,7 +467,6 @@ gopkg.in/yaml.v2
 gopkg.in/yaml.v3
 # k8s.io/api v0.27.6
 ## explicit; go 1.20
-k8s.io/api/admission/v1
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1alpha1
 k8s.io/api/admissionregistration/v1beta1
@@ -975,10 +981,10 @@ k8s.io/utils/trace
 # knative.dev/eventing v0.39.1
 ## explicit; go 1.19
 knative.dev/eventing/hack
+knative.dev/eventing/pkg/apis
 knative.dev/eventing/pkg/apis/config
 knative.dev/eventing/pkg/apis/duck
 knative.dev/eventing/pkg/apis/duck/v1
-knative.dev/eventing/pkg/apis/duck/v1beta1
 knative.dev/eventing/pkg/apis/eventing
 knative.dev/eventing/pkg/apis/eventing/v1
 knative.dev/eventing/pkg/apis/eventing/v1beta1
@@ -993,6 +999,8 @@ knative.dev/eventing/pkg/apis/sources
 knative.dev/eventing/pkg/apis/sources/config
 knative.dev/eventing/pkg/apis/sources/v1
 knative.dev/eventing/pkg/apis/sources/v1beta2
+knative.dev/eventing/pkg/auth
+knative.dev/eventing/pkg/broker
 knative.dev/eventing/pkg/client/clientset/versioned
 knative.dev/eventing/pkg/client/clientset/versioned/fake
 knative.dev/eventing/pkg/client/clientset/versioned/scheme
@@ -1026,11 +1034,8 @@ knative.dev/eventing/pkg/client/informers/externalversions/sources/v1beta2
 knative.dev/eventing/pkg/client/injection/client
 knative.dev/eventing/pkg/client/injection/client/fake
 knative.dev/eventing/pkg/client/injection/informers/eventing/v1/broker
-knative.dev/eventing/pkg/client/injection/informers/eventing/v1/trigger
-knative.dev/eventing/pkg/client/injection/informers/eventing/v1beta2/eventtype
 knative.dev/eventing/pkg/client/injection/informers/factory
 knative.dev/eventing/pkg/client/injection/reconciler/eventing/v1/broker
-knative.dev/eventing/pkg/client/injection/reconciler/eventing/v1beta2/eventtype
 knative.dev/eventing/pkg/client/listers/eventing/v1
 knative.dev/eventing/pkg/client/listers/eventing/v1beta1
 knative.dev/eventing/pkg/client/listers/eventing/v1beta2
@@ -1038,11 +1043,16 @@ knative.dev/eventing/pkg/client/listers/flows/v1
 knative.dev/eventing/pkg/client/listers/messaging/v1
 knative.dev/eventing/pkg/client/listers/sources/v1
 knative.dev/eventing/pkg/client/listers/sources/v1beta2
+knative.dev/eventing/pkg/eventingtls
+knative.dev/eventing/pkg/kncloudevents
+knative.dev/eventing/pkg/kncloudevents/attributes
+knative.dev/eventing/pkg/metrics
 knative.dev/eventing/pkg/reconciler/testing
 knative.dev/eventing/pkg/reconciler/testing/scheme
 knative.dev/eventing/pkg/reconciler/testing/v1
 knative.dev/eventing/pkg/reconciler/testing/v1beta2
-knative.dev/eventing/test/lib/resources
+knative.dev/eventing/pkg/tracing
+knative.dev/eventing/pkg/utils
 # knative.dev/hack v0.0.0-20231122182901-eb352426ecc1
 ## explicit; go 1.18
 knative.dev/hack
@@ -1066,7 +1076,6 @@ knative.dev/pkg/codegen/cmd/injection-gen/args
 knative.dev/pkg/codegen/cmd/injection-gen/generators
 knative.dev/pkg/configmap
 knative.dev/pkg/configmap/hash-gen
-knative.dev/pkg/configmap/informer
 knative.dev/pkg/controller
 knative.dev/pkg/environment
 knative.dev/pkg/hack
@@ -1074,8 +1083,6 @@ knative.dev/pkg/hash
 knative.dev/pkg/injection
 knative.dev/pkg/injection/clients/dynamicclient
 knative.dev/pkg/injection/clients/dynamicclient/fake
-knative.dev/pkg/injection/clients/namespacedkube/informers/factory
-knative.dev/pkg/injection/sharedmain
 knative.dev/pkg/kflag
 knative.dev/pkg/kmap
 knative.dev/pkg/kmeta
@@ -1090,7 +1097,6 @@ knative.dev/pkg/metrics/metricskey
 knative.dev/pkg/metrics/testing
 knative.dev/pkg/network
 knative.dev/pkg/network/handlers
-knative.dev/pkg/profiling
 knative.dev/pkg/ptr
 knative.dev/pkg/reconciler
 knative.dev/pkg/reconciler/testing
@@ -1098,16 +1104,12 @@ knative.dev/pkg/resolver
 knative.dev/pkg/signals
 knative.dev/pkg/system
 knative.dev/pkg/system/testing
-knative.dev/pkg/test
-knative.dev/pkg/test/environment
 knative.dev/pkg/test/helpers
-knative.dev/pkg/test/ingress
 knative.dev/pkg/test/logging
 knative.dev/pkg/test/mako/config
 knative.dev/pkg/test/mako/stub-sidecar
 knative.dev/pkg/test/monitoring
 knative.dev/pkg/test/security
-knative.dev/pkg/test/spoof
 knative.dev/pkg/test/zipkin
 knative.dev/pkg/third_party/mako/proto/quickstore_go_proto
 knative.dev/pkg/tracing
@@ -1115,9 +1117,6 @@ knative.dev/pkg/tracing/config
 knative.dev/pkg/tracing/propagation
 knative.dev/pkg/tracing/propagation/tracecontextb3
 knative.dev/pkg/tracker
-knative.dev/pkg/version
-knative.dev/pkg/webhook
-knative.dev/pkg/webhook/certificates/resources
 # knative.dev/reconciler-test v0.0.0-20231024072442-5fb93a792b99
 ## explicit; go 1.20
 knative.dev/reconciler-test/cmd/eventshub
