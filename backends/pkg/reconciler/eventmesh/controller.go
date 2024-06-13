@@ -2,8 +2,9 @@ package eventmesh
 
 import (
 	"context"
-	"k8s.io/client-go/rest"
 	"log"
+
+	"k8s.io/client-go/rest"
 
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/logging"
