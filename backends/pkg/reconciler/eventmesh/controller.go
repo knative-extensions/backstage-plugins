@@ -7,8 +7,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
-	"github.com/gorilla/mux"
-
+	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/logging"
 )
 
@@ -28,9 +27,6 @@ func startWebServer(ctx context.Context) {
 
 	logger.Infow("Starting eventmesh-backend webserver")
 
-	r := mux.NewRouter()
-	r.Use(commonMiddleware)
-
 	noTokenConfig, err := rest.InClusterConfig()
 	noTokenConfig.BearerToken = ""
 	noTokenConfig.Username = ""
@@ -40,11 +36,16 @@ func startWebServer(ctx context.Context) {
 	if err != nil {
 		log.Fatalf("Error getting in-cluster config: %v", err)
 	}
+	r := kncloudevents.NewHTTPEventReceiver(8080)
+	err = r.StartListen(ctx, HttpHandler{ctx, noTokenConfig})
+	log.Fatal(err)
 
-	r.HandleFunc("/", HttpHandler(ctx, noTokenConfig)).Methods("GET")
-	http.Handle("/", r)
+	// TODO: err
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	//r.HandleFunc("/", HttpHandler(ctx, noTokenConfig)).Methods("GET")
+	//http.Handle("/", r)
+
+	//log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func commonMiddleware(next http.Handler) http.Handler {
