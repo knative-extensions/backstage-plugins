@@ -3,71 +3,39 @@ package eventmesh
 import (
 	"context"
 	"log"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"k8s.io/client-go/rest"
 
-	"knative.dev/pkg/controller"
+	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/logging"
-
-	eventtypereconciler "knative.dev/eventing/pkg/client/injection/reconciler/eventing/v1beta2/eventtype"
-
-	brokerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/broker"
-	triggerinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1/trigger"
-	eventtypeinformer "knative.dev/eventing/pkg/client/injection/informers/eventing/v1beta2/eventtype"
-
-	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
-	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
 )
 
-type Listers struct {
-	EventTypeLister eventinglistersv1beta2.EventTypeLister
-	BrokerLister    eventinglistersv1.BrokerLister
-	TriggerLister   eventinglistersv1.TriggerLister
-}
-
-func NewController(ctx context.Context) *controller.Impl {
-
-	reconciler := &Reconciler{}
+func NewController(ctx context.Context) {
 
 	logger := logging.FromContext(ctx)
 
 	logger.Infow("Starting eventmesh-backend controller")
 
-	// shared main does all the injection and starts the controller
-	// thus, we want to use it.
-	// and, it wants a controller.Impl, so, we're just returning one that's not really used in reality.
-	impl := eventtypereconciler.NewImpl(ctx, reconciler)
-
-	listers := Listers{
-		EventTypeLister: eventtypeinformer.Get(ctx).Lister(),
-		BrokerLister:    brokerinformer.Get(ctx).Lister(),
-		TriggerLister:   triggerinformer.Get(ctx).Lister(),
-	}
-
-	go startWebServer(ctx, listers)
-
-	return impl
+	startWebServer(ctx)
 }
 
-func startWebServer(ctx context.Context, listers Listers) {
+func startWebServer(ctx context.Context) {
 
 	logger := logging.FromContext(ctx)
 
 	logger.Infow("Starting eventmesh-backend webserver")
 
-	r := mux.NewRouter()
-	r.Use(commonMiddleware)
+	noTokenConfig, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("Error getting in-cluster config: %v", err)
+	}
 
-	r.HandleFunc("/", HttpHandler(ctx, listers)).Methods("GET")
-	http.Handle("/", r)
+	noTokenConfig.BearerToken = ""
+	noTokenConfig.Username = ""
+	noTokenConfig.Password = ""
+	noTokenConfig.BearerTokenFile = ""
 
-	log.Fatal(http.ListenAndServe(":8080", r))
-}
-
-func commonMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
+	r := kncloudevents.NewHTTPEventReceiver(8080)
+	err = r.StartListen(ctx, HttpHandler{ctx, noTokenConfig})
+	log.Fatal(err)
 }

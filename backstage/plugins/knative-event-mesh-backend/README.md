@@ -25,13 +25,15 @@ Rest of this documentation is for the static plugin.
 Install the backend and the relevant configuration in the Kubernetes cluster
 
 ```bash
-kubectl apply -f https://github.com/knative-extensions/backstage-plugins/releases/download/v0.1.0/eventmesh.yaml
+VERSION="latest" # or a specific version like 0.1.2
+kubectl apply -f https://github.com/knative-extensions/backstage-plugins/releases/${VERSION}/download/eventmesh.yaml
 ```
 
 In your Backstage directory, run the following command to install the plugin:
 
 ```bash
-yarn workspace backend add @knative-extensions/plugin-knative-event-mesh-backend
+VERSION="latest" # or a specific version like 0.1.2
+yarn workspace backend add @knative-extensions/plugin-knative-event-mesh-backend@${VERSION}
 ```
 
 ## Configuration
@@ -53,13 +55,129 @@ catalog:
   providers:
     knativeEventMesh:
       dev:
-        baseUrl: 'http://localhost:8080' # URL of the backend installed in the cluster
+        token: '${KNATIVE_EVENT_MESH_TOKEN}'     # SA token to authenticate to the backend
+        baseUrl: '${KNATIVE_EVENT_MESH_BACKEND}' # URL of the backend installed in the cluster
         schedule: # optional; same options as in TaskScheduleDefinition
           # supports cron, ISO duration, "human duration" as used in code
           frequency: { minutes: 1 }
           # supports ISO duration, "human duration" as used in code
           timeout: { minutes: 1 }
 ```
+
+You can either manually change the placeholders in the `app-config.yaml` file or use environment variables to set the
+values. The environment variables can be set as following before starting the Backstage instance:
+
+```bash
+export KNATIVE_EVENT_MESH_TOKEN=your-token
+export KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080
+```
+
+The value of `KNATIVE_EVENT_MESH_BACKEND` should be the URL of the backend service. If you are running the backend
+service in the same cluster as the Backstage instance, you can use the service name as the URL. Or, if you are running
+the backend without exposing it, you can use `kubectl port-forward` as mentioned above.
+
+The value of `KNATIVE_EVENT_MESH_TOKEN` should be a service account token that has the necessary permissions to list
+the Knative Eventing resources in the cluster. The backend will use this token to authenticate to the Kubernetes API
+server. This is required for security reasons as otherwise (if the backend is running with a SA token directly) the
+backend would have full access to the cluster will be returning all resources to anyone who can access the backend.
+
+The token will require the following permissions to work properly:
+
+- `get`, `list` and `watch` permissions for `eventing.knative.dev/brokers`, `eventing.knative.dev/eventtypes` and
+  `eventing.knative.dev/triggers` resources
+- `get` permission for all resources to fetch subscribers for triggers
+
+You can create a ClusterRole with the necessary permissions and bind it to the service account token.
+
+An example configuration is as follows:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-eventmesh-backend-service-account
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: my-eventmesh-backend-cluster-role
+rules:
+  # permissions for eventtypes, brokers and triggers
+  - apiGroups:
+      - "eventing.knative.dev"
+    resources:
+      - brokers
+      - eventtypes
+      - triggers
+    verbs:
+      - get
+      - list
+      - watch
+  # permissions to get subscribers for triggers
+  # as subscribers can be any resource, we need to give access to all resources
+  # we fetch subscribers one by one, we only need `get` verb
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: my-eventmesh-backend-cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: my-eventmesh-backend-service-account
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: my-eventmesh-backend-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-eventmesh-backend-secret
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: my-eventmesh-backend-service-account
+type: kubernetes.io/service-account-token
+```
+
+To get the token, you can run the following command:
+
+```bash
+kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode
+```
+
+Run a quick check to see if the token works:
+
+```bash
+export KUBE_API_SERVER_URL=$(kubectl config view --minify --output jsonpath="{.clusters[*].cluster.server}") # e.g. "https://192.168.2.151:16443"
+export KUBE_SA_TOKEN=$(kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode)
+curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KUBE_API_SERVER_URL}/apis/eventing.knative.dev/v1/namespaces/default/brokers" | json_pp
+# Should see the brokers, or nothing if there are no brokers
+# But, should not see an error
+```
+
+Run a second quick check to see if the token works with the backend
+
+```bash
+KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080 # or the URL of the backend
+export KUBE_SA_TOKEN=$(kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode)
+curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KNATIVE_EVENT_MESH_BACKEND}" | json_pp
+# Should see the response from the backend such as
+# {
+#   "brokers" : [...],
+#   "eventTypes" : [...]
+#}
+```
+
+If these quick checks work, you can use the token in the `app-config.yaml` file as the value
+of `KNATIVE_EVENT_MESH_TOKEN`.
 
 ### Legacy Backend Installation
 

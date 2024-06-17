@@ -4,6 +4,7 @@ export type KnativeEventMeshProviderConfig = {
     id:string;
     baseUrl:string;
     schedule?:TaskScheduleDefinition;
+    token?:string;
 };
 
 export const TypeKnativeEvent = 'eventType';

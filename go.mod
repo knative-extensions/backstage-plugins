@@ -4,10 +4,11 @@ go 1.21
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru v1.0.2
 	go.uber.org/zap v1.26.0
+	k8s.io/api v0.27.6
 	k8s.io/apimachinery v0.27.6
+	k8s.io/client-go v0.27.6
 	knative.dev/eventing v0.39.1
 	knative.dev/hack v0.0.0-20231122182901-eb352426ecc1
 	knative.dev/pkg v0.0.0-20231204120332-9386ad6703ee
@@ -20,17 +21,18 @@ require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.1-0.20210420163308-c1402a70e2f1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudevents/conformance v0.2.0 // indirect
 	github.com/cloudevents/sdk-go/sql/v2 v2.13.0 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.13.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
@@ -45,6 +47,8 @@ require (
 	github.com/google/mako v0.0.0-20190821191249-122f8dcef9e3 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.6.7 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -70,8 +74,8 @@ require (
 	github.com/stretchr/testify v1.8.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
@@ -92,9 +96,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.27.6 // indirect
 	k8s.io/apiextensions-apiserver v0.27.6 // indirect
-	k8s.io/client-go v0.27.6 // indirect
 	k8s.io/code-generator v0.27.6 // indirect
 	k8s.io/gengo v0.0.0-20221011193443-fad74ee6edd9 // indirect
 	k8s.io/klog v1.0.0 // indirect

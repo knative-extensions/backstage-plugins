@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	"k8s.io/client-go/dynamic/fake"
 	"knative.dev/pkg/injection/clients/dynamicclient"
 
 	"github.com/google/go-cmp/cmp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"knative.dev/pkg/apis"
 
 	"go.uber.org/zap"
@@ -20,13 +21,11 @@ import (
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 	eventingv1beta2 "knative.dev/eventing/pkg/apis/eventing/v1beta2"
 
-	reconcilertestingv1 "knative.dev/eventing/pkg/reconciler/testing/v1"
-	reconcilertestingv1beta2 "knative.dev/eventing/pkg/reconciler/testing/v1beta2"
-
+	corev1 "k8s.io/api/core/v1"
 	testingv1 "knative.dev/eventing/pkg/reconciler/testing/v1"
 	testingv1beta2 "knative.dev/eventing/pkg/reconciler/testing/v1beta2"
 
-	corev1 "k8s.io/api/core/v1"
+	fakeclientset "knative.dev/eventing/pkg/client/clientset/versioned/fake"
 )
 
 func TestBuildEventMesh(t *testing.T) {
@@ -512,37 +511,32 @@ func TestBuildEventMesh(t *testing.T) {
 	}
 	for _, tt := range tests {
 		logger := zap.NewNop().Sugar()
-		v1beta2objects := make([]runtime.Object, 0, 10)
+		v1beta2objects := make([]runtime.Object, 0, 20)
 		for _, et := range tt.eventTypes {
 			v1beta2objects = append(v1beta2objects, et)
 		}
-		fakelistersv1beta2 := reconcilertestingv1beta2.NewListers(v1beta2objects)
 
-		v1objects := make([]runtime.Object, 0, 10)
+		//v1objects := make([]runtime.Object, 0, 10)
 		for _, b := range tt.brokers {
-			v1objects = append(v1objects, b)
+			v1beta2objects = append(v1beta2objects, b)
 		}
-		for _, t := range tt.triggers {
-			v1objects = append(v1objects, t)
-		}
-		fakelistersv1 := reconcilertestingv1.NewListers(v1objects)
 
+		for _, t := range tt.triggers {
+			v1beta2objects = append(v1beta2objects, t)
+		}
 		sc := runtime.NewScheme()
 		_ = corev1.AddToScheme(sc)
+		_ = eventingv1.AddToScheme(sc)
 
 		fakeDynamicClient := fake.NewSimpleDynamicClient(sc, tt.extraObjects...)
 
 		ctx := context.TODO()
 		ctx = context.WithValue(ctx, dynamicclient.Key{}, fakeDynamicClient)
 
-		listers := Listers{
-			BrokerLister:    fakelistersv1.GetBrokerLister(),
-			EventTypeLister: fakelistersv1beta2.GetEventTypeLister(),
-			TriggerLister:   fakelistersv1.GetTriggerLister(),
-		}
+		fakeClient := fakeclientset.NewSimpleClientset(v1beta2objects...)
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildEventMesh(ctx, listers, logger)
+			got, err := BuildEventMesh(ctx, fakeClient, logger)
 			if (err != nil) != tt.error {
 				t.Errorf("BuildEventMesh() error = %v, error %v", err, tt.error)
 				return

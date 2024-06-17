@@ -3,29 +3,26 @@ package eventmesh
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/rest"
+	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"knative.dev/pkg/logging"
 
 	"knative.dev/pkg/injection/clients/dynamicclient"
 
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
-	eventinglistersv1beta2 "knative.dev/eventing/pkg/client/listers/eventing/v1beta2"
-
-	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/apimachinery/pkg/util/json"
-
-	"knative.dev/pkg/logging"
-
-	eventinglistersv1 "knative.dev/eventing/pkg/client/listers/eventing/v1"
 )
 
 // EventMesh is the top-level struct that holds the event mesh data.
@@ -47,26 +44,49 @@ type EventMesh struct {
 const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
 
 // HttpHandler is the HTTP handler that's used to serve the event mesh data.
-func HttpHandler(ctx context.Context, listers Listers) func(w http.ResponseWriter, req *http.Request) {
-	logger := logging.FromContext(ctx)
+type HttpHandler struct {
+	ctx             context.Context
+	inClusterConfig *rest.Config
+}
 
-	// this handler simply calls the event mesh builder and returns the result as JSON
-	return func(w http.ResponseWriter, req *http.Request) {
-		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
+// This handler simply calls the event mesh builder and returns the result as JSON
+func (h HttpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	logger := logging.FromContext(h.ctx)
 
-		eventMesh, err := BuildEventMesh(ctx, listers, logger)
-		if err != nil {
-			logger.Errorw("Error building event mesh", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	w.Header().Add("Content-Type", "application/json")
 
-		err = json.NewEncoder(w).Encode(eventMesh)
-		if err != nil {
-			logger.Errorw("Error encoding event mesh", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
+
+	config := rest.CopyConfig(h.inClusterConfig)
+	authHeader := req.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+		return
+	}
+	// header value is in this format: "Bearer <token>"
+	// we only need the token part
+	if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+		http.Error(w, "Invalid Authorization header. Should start with `Bearer `", http.StatusUnauthorized)
+		return
+	}
+	config.BearerToken = authHeader[7:]
+	clientset, err := versioned.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Error creating clientset: %v", err)
+	}
+
+	eventMesh, err := BuildEventMesh(h.ctx, clientset, logger)
+	if err != nil {
+		logger.Errorw("Error building event mesh", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(eventMesh)
+	if err != nil {
+		logger.Errorw("Error encoding event mesh", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -76,9 +96,9 @@ func HttpHandler(ctx context.Context, listers Listers) func(w http.ResponseWrite
 // - Do the same for event types.
 // - Fetch the triggers, find out what event types they're subscribed to and find out the resources that are receiving the events.
 // - Make a connection between the event types and the subscribers. Store this connection in the eventType struct.
-func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLogger) (EventMesh, error) {
+func BuildEventMesh(ctx context.Context, clientset versioned.Interface, logger *zap.SugaredLogger) (EventMesh, error) {
 	// fetch the brokers and convert them to the representation that's consumed by the Backstage plugin.
-	convertedBrokers, err := fetchBrokers(listers.BrokerLister, logger)
+	convertedBrokers, err := fetchBrokers(clientset, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting brokers", "error", err)
 		return EventMesh{}, err
@@ -93,7 +113,7 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	}
 
 	// fetch the event types and convert them to the representation that's consumed by the Backstage plugin.
-	convertedEventTypes, err := fetchEventTypes(listers.EventTypeLister, logger)
+	convertedEventTypes, err := fetchEventTypes(clientset, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting event types", "error", err)
 		return EventMesh{}, err
@@ -109,7 +129,8 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 	}
 
 	// fetch the triggers we will process them later
-	triggers, err := listers.TriggerLister.List(labels.Everything())
+	triggers, err := clientset.EventingV1().Triggers(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
 		return EventMesh{}, err
@@ -124,8 +145,8 @@ func BuildEventMesh(ctx context.Context, listers Listers, logger *zap.SugaredLog
 		etByNamespacedName[et.NamespacedName()] = et
 	}
 
-	for _, trigger := range triggers {
-		err := processTrigger(ctx, trigger, brokerMap, etByNamespacedName, logger)
+	for _, trigger := range triggers.Items {
+		err := processTrigger(ctx, &trigger, brokerMap, etByNamespacedName, logger)
 		if err != nil {
 			logger.Errorw("Error processing trigger", "error", err)
 			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
@@ -234,39 +255,41 @@ func collectSubscribedEventTypes(trigger *eventingv1.Trigger, broker *Broker, et
 }
 
 // fetchBrokers fetches the brokers and converts them to the representation that's consumed by the Backstage plugin.
-func fetchBrokers(brokerLister eventinglistersv1.BrokerLister, logger *zap.SugaredLogger) ([]*Broker, error) {
-	fetchedBrokers, err := brokerLister.List(labels.Everything())
+func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*Broker, error) {
+	brokers, err := clientset.EventingV1().Brokers(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+
 	if err != nil {
 		logger.Errorw("Error listing brokers", "error", err)
 		return nil, err
 	}
 
-	convertedBrokers := make([]*Broker, 0, len(fetchedBrokers))
-	for _, br := range fetchedBrokers {
-		convertedBroker := convertBroker(br)
+	convertedBrokers := make([]*Broker, 0, len(brokers.Items))
+	for _, br := range brokers.Items {
+		convertedBroker := convertBroker(&br)
 		convertedBrokers = append(convertedBrokers, &convertedBroker)
 	}
 	return convertedBrokers, err
 }
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.
-func fetchEventTypes(eventTypeLister eventinglistersv1beta2.EventTypeLister, logger *zap.SugaredLogger) ([]*EventType, error) {
-	fetchedEventTypes, err := eventTypeLister.List(labels.Everything())
+func fetchEventTypes(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*EventType, error) {
+	eventTypeResponse, err := clientset.EventingV1beta2().EventTypes(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logger.Errorw("Error listing eventTypes", "error", err)
 		return nil, err
 	}
+	eventTypes := eventTypeResponse.Items
 
-	sort.Slice(fetchedEventTypes, func(i, j int) bool {
-		if fetchedEventTypes[i].Namespace != fetchedEventTypes[j].Namespace {
-			return fetchedEventTypes[i].Namespace < fetchedEventTypes[j].Namespace
+	sort.Slice(eventTypes, func(i, j int) bool {
+		if eventTypes[i].Namespace != eventTypes[j].Namespace {
+			return eventTypes[i].Namespace < eventTypes[j].Namespace
 		}
-		return fetchedEventTypes[i].Name < fetchedEventTypes[j].Name
+		return eventTypes[i].Name < eventTypes[j].Name
 	})
 
-	convertedEventTypes := make([]*EventType, 0, len(fetchedEventTypes))
-	for _, et := range fetchedEventTypes {
-		convertedEventType := convertEventType(et)
+	convertedEventTypes := make([]*EventType, 0, len(eventTypes))
+	for _, et := range eventTypes {
+		convertedEventType := convertEventType(&et)
 		convertedEventTypes = append(convertedEventTypes, &convertedEventType)
 	}
 

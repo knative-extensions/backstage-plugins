@@ -49,8 +49,13 @@ type EventMesh = {
     brokers:Broker[];
 };
 
-export async function getEventMesh(baseUrl:string):Promise<EventMesh> {
-    const response = await fetch(`${baseUrl}`);
+export async function getEventMesh(baseUrl: string, token: string | undefined):Promise<EventMesh> {
+    const response = await fetch(`${baseUrl}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
     if (!response.ok) {
         throw new Error(response.statusText);
     }
@@ -61,6 +66,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
     private readonly env:string;
     private readonly baseUrl:string;
     private readonly logger:Logger;
+    private readonly token:string | undefined;
     private readonly scheduleFn:() => Promise<void>;
     private connection?:EntityProviderConnection;
 
@@ -73,6 +79,10 @@ export class KnativeEventMeshProvider implements EntityProvider {
         },
     ):KnativeEventMeshProvider[] {
         const providerConfigs = readKnativeEventMeshProviderConfigs(configRoot);
+
+        if (configRoot.getConfig('token') === undefined) {
+            throw new Error('Service account token must be provided.');
+        }
 
         if (!options.schedule && !options.scheduler) {
             throw new Error('Either schedule or scheduler must be provided.');
@@ -110,7 +120,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
     constructor(config:KnativeEventMeshProviderConfig, logger:Logger, taskRunner:TaskRunner) {
         this.env = config.id;
         this.baseUrl = config.baseUrl;
-
+        this.token = config.token;
         this.logger = logger.child({
             target: this.getProviderName(),
         });
@@ -160,8 +170,9 @@ export class KnativeEventMeshProvider implements EntityProvider {
         }
 
         const url = this.baseUrl;
+        const token = this.token;
 
-        const eventMesh = await getEventMesh(url);
+        const eventMesh = await getEventMesh(url, token);
 
         const entities = this.buildEntities(eventMesh);
 
