@@ -10,8 +10,8 @@ The Go standard library contains a default `http.Client` called
 encouraged; from the `http` package documentation:
 
 > The Client's Transport typically has internal state (cached TCP connections),
-> so Clients should be reused instead of created as needed. Clients are safe for
-> concurrent use by multiple goroutines.
+so Clients should be reused instead of created as needed. Clients are safe for
+concurrent use by multiple goroutines.
 
 Unfortunately, this is a shared value, and it is not uncommon for libraries to
 assume that they are free to modify it at will. With enough dependencies, it
