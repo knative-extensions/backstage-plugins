@@ -1,3 +1,20 @@
+// Package eventmesh provides primitives to interact with the OpenAPI HTTP API.
+//
+// Terms Of Service:
+//
+//     Schemes: http, https
+//     Host: localhost
+//     BasePath: /v1
+//     Version: 0.0.1
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+// swagger:meta
+
 package eventmesh
 
 import (
@@ -27,13 +44,16 @@ import (
 
 // EventMesh is the top-level struct that holds the event mesh data.
 // It's the struct that's serialized and sent to the Backstage plugin.
+// swagger:model
 type EventMesh struct {
 	// EventTypes is a list of all event types in the cluster.
 	// While we can embed the event types in the brokers, we keep them separate because
 	// not every event type is tied to a broker.
+	// required: true
 	EventTypes []*EventType `json:"eventTypes"`
 
 	// Brokers is a list of all brokers in the cluster.
+	// required: true
 	Brokers []*Broker `json:"brokers"`
 }
 
