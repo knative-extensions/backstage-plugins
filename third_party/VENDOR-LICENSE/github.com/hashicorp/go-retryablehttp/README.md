@@ -5,7 +5,6 @@ go-retryablehttp
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 
 [travis]: http://travis-ci.org/hashicorp/go-retryablehttp
-
 [godocs]: http://godoc.org/github.com/hashicorp/go-retryablehttp
 
 The `retryablehttp` package provides a familiar HTTP client interface with
@@ -16,7 +15,7 @@ makes `retryablehttp` very easy to drop into existing programs.
 `retryablehttp` performs automatic retries under certain conditions. Mainly, if
 an error is returned by the client (connection errors, etc.), or if a 500-range
 response code is received (except 501), then a retry is invoked after a wait
-period. Otherwise, the response is returned and left to the caller to
+period.  Otherwise, the response is returned and left to the caller to
 interpret.
 
 The main difference from `net/http` is that requests which take a request body
@@ -27,6 +26,7 @@ fails so that the full request can be attempted again. See the
 details.
 
 Version 0.6.0 and before are compatible with Go prior to 1.12. From 0.6.1 onward, Go 1.12+ is required.
+From 0.6.7 onward, Go 1.13+ is required.
 
 Example Use
 ===========
@@ -59,4 +59,4 @@ standardClient := retryClient.StandardClient() // *http.Client
 ```
 
 For more usage and examples see the
-[godoc](http://godoc.org/github.com/hashicorp/go-retryablehttp).
+[pkg.go.dev](https://pkg.go.dev/github.com/hashicorp/go-retryablehttp).
