@@ -5,6 +5,7 @@ package e2e
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -17,6 +18,13 @@ import (
 )
 
 var global environment.GlobalEnvironment
+
+func TestMain(m *testing.M) {
+	global = environment.NewStandardGlobalEnvironment()
+
+	// Run the tests.
+	os.Exit(m.Run())
+}
 
 func TestIntegration(t *testing.T) {
 	t.Parallel()
