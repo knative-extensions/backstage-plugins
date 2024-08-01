@@ -117,3 +117,27 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
           package: backstage/plugins/knative-event-mesh-backend/dist-dynamic
+
+      - name: Post status to Slack
+        # Note: using env.SLACK_WEBHOOK here because secrets are not allowed in the if block.
+        if: env.SLACK_WEBHOOK != ''
+        uses: rtCamp/action-slack-notify@v2.3.0
+        env:
+          SLACK_CHANNEL: knative-release
+          SLACK_USERNAME: knative/release
+          SLACK_ICON: http://github.com/knative.png?size=48
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          MSG_MINIMAL: 'true'
+          SLACK_FOOTER: View GitHub Run - https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          SLACK_MESSAGE: |
+            ${{ env.CHECK_MESSAGE }}
+            ${{ env.VERIFY_MESSAGE }}
+
+      - name: Fail if NO-GO
+        if: env.current == 'false'
+        run: |
+          # When we have figured out that things are NO-GO, we intentionally fail the job
+          # so that the status badge shows up red and we can use the badges to create a
+          # releasability dashboard for all of the repos.
+          exit 1
