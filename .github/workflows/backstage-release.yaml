@@ -60,6 +60,13 @@ jobs:
         working-directory: ./backstage
         run: npm install @backstage/cli -g
 
+      - name: Compile
+        shell: bash
+        working-directory: ./backstage
+        run: |
+          export PATH="./node_modules/.bin/:$PATH"
+          yarn tsc
+
       - name: Run tests
         shell: bash
         working-directory: ./backstage
