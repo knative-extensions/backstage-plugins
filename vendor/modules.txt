@@ -1122,6 +1122,7 @@ knative.dev/pkg/tracker
 knative.dev/reconciler-test/cmd/eventshub
 knative.dev/reconciler-test/pkg/environment
 knative.dev/reconciler-test/pkg/eventshub
+knative.dev/reconciler-test/pkg/eventshub/assert
 knative.dev/reconciler-test/pkg/eventshub/dropevents
 knative.dev/reconciler-test/pkg/eventshub/dropevents/dropeventsfibonacci
 knative.dev/reconciler-test/pkg/eventshub/dropevents/dropeventsfirst
