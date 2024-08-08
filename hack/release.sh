@@ -28,6 +28,18 @@ COMPONENTS=(
 )
 readonly COMPONENTS
 
+function test_plugins() {
+  echo "Building and testing Backstage plugins"
+  # TODO: do we have yarn here?
+  cd ./backstage
+  yarn --prefer-offline --frozen-lockfile
+  npm install @backstage/cli -g
+  yarn backstage-cli repo lint
+  yarn tsc
+  yarn test
+  yarn build:all
+}
+
 function build_release() {
    # Update release labels if this is a tagged release
   if [[ -n "${TAG}" ]]; then
@@ -45,6 +57,8 @@ function build_release() {
     ko resolve -j 1 ${KO_FLAGS} -f ${config}/ | "${LABEL_YAML_CMD[@]}" > ${yaml}
     all_yamls+=(${yaml})
   done
+
+  test_plugins
 
   ARTIFACTS_TO_PUBLISH="${all_yamls[@]}"
 }
