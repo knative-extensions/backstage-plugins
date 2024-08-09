@@ -21,10 +21,26 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+go run "$(dirname "$0")/../test/version_check/check_k8s_version.go"
+if [[ $? -ne 0 ]]; then
+    echo "Kubernetes version check failed. Exiting."
+    exit 1
+fi
+
 export SCALE_CHAOSDUCK_TO_ZERO=1
 export REPLICAS=1
-export KO_FLAGS=${KO_FLAGS:-"--platform="""} # Default to current OS and arch
+
+KO_ARCH=$(go env | grep GOARCH | awk -F\' '{print $2}')
+
+export KO_FLAGS=${KO_FLAGS:-"--platform=linux/$KO_ARCH"}
 
 source "$(dirname "$0")/../test/e2e-common.sh"
 
 knative_setup || exit $?
+
+test_setup || exit $?
+
+if [[ ! -e $(dirname "$0")/../tmp ]]; then
+    mkdir $(dirname "$0")/../tmp
+fi
+echo "${UNINSTALL_LIST[@]}" > $(dirname "$0")/../tmp/uninstall_list.txt
