@@ -21,6 +21,13 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/equality"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"knative.dev/pkg/kmeta"
+	pkgreconciler "knative.dev/pkg/reconciler"
+
+	"knative.dev/eventing/pkg/apis/feature"
+
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -32,11 +39,20 @@ import (
 	"knative.dev/pkg/ptr"
 )
 
+const (
+	// OIDCLabelKey is used to filter out all the informers that related to OIDC work
+	OIDCLabelKey = "eventing.knative.dev/oidc"
+
+	// OIDCLabelSelector is the label selector for the OIDC resources
+	OIDCLabelSelector = OIDCLabelKey
+)
+
 // GetOIDCServiceAccountNameForResource returns the service account name to use
 // for OIDC authentication for the given resource.
 func GetOIDCServiceAccountNameForResource(gvk schema.GroupVersionKind, objectMeta metav1.ObjectMeta) string {
-	sa := fmt.Sprintf("oidc-%s-%s-%s", gvk.GroupKind().Group, gvk.GroupKind().Kind, objectMeta.GetName())
-
+	suffix := fmt.Sprintf("-oidc-%s-%s", gvk.Group, gvk.Kind)
+	parent := objectMeta.GetName()
+	sa := kmeta.ChildName(parent, suffix)
 	return strings.ToLower(sa)
 }
 
@@ -60,6 +76,9 @@ func GetOIDCServiceAccountForResource(gvk schema.GroupVersionKind, objectMeta me
 			Annotations: map[string]string{
 				"description": fmt.Sprintf("Service Account for OIDC Authentication for %s %q", gvk.GroupKind().Kind, objectMeta.Name),
 			},
+			Labels: map[string]string{
+				OIDCLabelKey: "enabled",
+			},
 		},
 	}
 }
@@ -70,27 +89,84 @@ func EnsureOIDCServiceAccountExistsForResource(ctx context.Context, serviceAccou
 	saName := GetOIDCServiceAccountNameForResource(gvk, objectMeta)
 	sa, err := serviceAccountLister.ServiceAccounts(objectMeta.Namespace).Get(saName)
 
+	expected := GetOIDCServiceAccountForResource(gvk, objectMeta)
+
 	// If the resource doesn't exist, we'll create it.
 	if apierrs.IsNotFound(err) {
 		logging.FromContext(ctx).Debugw("Creating OIDC service account", zap.Error(err))
 
-		expected := GetOIDCServiceAccountForResource(gvk, objectMeta)
-
 		_, err = kubeclient.CoreV1().ServiceAccounts(objectMeta.Namespace).Create(ctx, expected, metav1.CreateOptions{})
 		if err != nil {
-			return fmt.Errorf("could not create OIDC service account %s/%s for %s: %w", objectMeta.Name, objectMeta.Namespace, gvk.Kind, err)
+			return fmt.Errorf("could not create OIDC service account %s/%s for %s: %w", objectMeta.Namespace, objectMeta.Name, gvk.Kind, err)
 		}
 
 		return nil
 	}
-
 	if err != nil {
-		return fmt.Errorf("could not get OIDC service account %s/%s for %s: %w", objectMeta.Name, objectMeta.Namespace, gvk.Kind, err)
+		return fmt.Errorf("could not get OIDC service account %s/%s for %s: %w", objectMeta.Namespace, objectMeta.Name, gvk.Kind, err)
 	}
-
 	if !metav1.IsControlledBy(&sa.ObjectMeta, &objectMeta) {
 		return fmt.Errorf("service account %s not owned by %s %s", sa.Name, gvk.Kind, objectMeta.Name)
 	}
 
+	if !equality.Semantic.DeepDerivative(expected, sa) {
+		expected.ResourceVersion = sa.ResourceVersion
+
+		_, err = kubeclient.CoreV1().ServiceAccounts(objectMeta.Namespace).Update(ctx, expected, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("could not update OIDC service account %s/%s for %s: %w", objectMeta.Namespace, objectMeta.Name, gvk.Kind, err)
+		}
+
+		return nil
+
+	}
+
+	return nil
+}
+
+// DeleteOIDCServiceAccountIfExists makes sure the given resource does not have an OIDC service account.
+// If it does that service account is deleted.
+func DeleteOIDCServiceAccountIfExists(ctx context.Context, serviceAccountLister corev1listers.ServiceAccountLister, kubeclient kubernetes.Interface, gvk schema.GroupVersionKind, objectMeta metav1.ObjectMeta) error {
+	saName := GetOIDCServiceAccountNameForResource(gvk, objectMeta)
+	sa, err := serviceAccountLister.ServiceAccounts(objectMeta.Namespace).Get(saName)
+
+	if err == nil && metav1.IsControlledBy(&sa.ObjectMeta, &objectMeta) {
+		logging.FromContext(ctx).Debugf("OIDC Service account exists and has correct owner (%s/%s). Deleting OIDC service account", objectMeta.Name, objectMeta.Namespace)
+
+		err = kubeclient.CoreV1().ServiceAccounts(objectMeta.Namespace).Delete(ctx, sa.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return fmt.Errorf("could not delete OIDC service account %s/%s for %s: %w", objectMeta.Name, objectMeta.Namespace, gvk.Kind, err)
+		}
+	} else if apierrs.IsNotFound(err) {
+		return nil
+	}
+
+	return err
+}
+
+type OIDCIdentityStatusMarker interface {
+	MarkOIDCIdentityCreatedSucceeded()
+	MarkOIDCIdentityCreatedSucceededWithReason(reason, messageFormat string, messageA ...interface{})
+	MarkOIDCIdentityCreatedFailed(reason, messageFormat string, messageA ...interface{})
+}
+
+func SetupOIDCServiceAccount(ctx context.Context, flags feature.Flags, serviceAccountLister corev1listers.ServiceAccountLister, kubeclient kubernetes.Interface, gvk schema.GroupVersionKind, objectMeta metav1.ObjectMeta, marker OIDCIdentityStatusMarker, setAuthStatus func(a *duckv1.AuthStatus)) pkgreconciler.Event {
+	if flags.IsOIDCAuthentication() {
+		saName := GetOIDCServiceAccountNameForResource(gvk, objectMeta)
+		setAuthStatus(&duckv1.AuthStatus{
+			ServiceAccountName: &saName,
+		})
+		if err := EnsureOIDCServiceAccountExistsForResource(ctx, serviceAccountLister, kubeclient, gvk, objectMeta); err != nil {
+			marker.MarkOIDCIdentityCreatedFailed("Unable to resolve service account for OIDC authentication", "%v", err)
+			return err
+		}
+		marker.MarkOIDCIdentityCreatedSucceeded()
+	} else {
+		if err := DeleteOIDCServiceAccountIfExists(ctx, serviceAccountLister, kubeclient, gvk, objectMeta); err != nil {
+			return err
+		}
+		setAuthStatus(nil)
+		marker.MarkOIDCIdentityCreatedSucceededWithReason(fmt.Sprintf("%s feature disabled", feature.OIDCAuthentication), "")
+	}
 	return nil
 }

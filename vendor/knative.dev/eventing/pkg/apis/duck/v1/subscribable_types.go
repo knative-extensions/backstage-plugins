@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +35,9 @@ var _ duck.Implementable = (*Subscribable)(nil)
 //
 // At least one of SubscriberURI and ReplyURI must be present
 type SubscriberSpec struct {
+	// Name is used to identify the original subscription object.
+	// +optional
+	Name *string `json:"name,omitempty"`
 	// UID is used to understand the origin of the subscriber.
 	// +optional
 	UID types.UID `json:"uid,omitempty"`
@@ -67,6 +70,9 @@ type SubscriberSpec struct {
 	// DeliverySpec contains options controlling the event delivery
 	// +optional
 	Delivery *DeliverySpec `json:"delivery,omitempty"`
+	// Auth contains the service account name for the subscription
+	// +optional
+	Auth *duckv1.AuthStatus `json:"auth,omitempty"`
 }
 
 // SubscriberStatus defines the status of a single subscriber to a Channel.

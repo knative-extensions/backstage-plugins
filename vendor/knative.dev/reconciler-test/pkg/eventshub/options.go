@@ -81,7 +81,16 @@ func StartSenderTLS(sinkSvc string, caCerts *string) EventsHubOption {
 // This can be used together with InputEvent, AddTracing, EnableIncrementalId, InputEncoding and InputHeader options
 func StartSenderToResource(gvr schema.GroupVersionResource, name string) EventsHubOption {
 	return func(ctx context.Context, envs map[string]string) error {
-		u, err := k8s.Address(ctx, gvr, name)
+		env := environment.FromContext(ctx)
+		return StartSenderToNamespacedResource(gvr, name, env.Namespace())(ctx, envs)
+	}
+}
+
+// StartSenderToNamespacedResource starts the sender in the eventshub pointing to the provided resource
+// This can be used together with InputEvent, AddTracing, EnableIncrementalId, InputEncoding and InputHeader options
+func StartSenderToNamespacedResource(gvr schema.GroupVersionResource, name, namespace string) EventsHubOption {
+	return func(ctx context.Context, envs map[string]string) error {
+		u, err := k8s.NamespacedAddress(ctx, gvr, name, namespace)
 		if err != nil {
 			return err
 		}
@@ -102,7 +111,17 @@ func StartSenderToResource(gvr schema.GroupVersionResource, name string) EventsH
 // This can be used together with InputEvent, AddTracing, EnableIncrementalId, InputEncoding and InputHeader options
 func StartSenderToResourceTLS(gvr schema.GroupVersionResource, name string, caCerts *string) EventsHubOption {
 	return func(ctx context.Context, m map[string]string) error {
-		u, err := k8s.Address(ctx, gvr, name)
+		env := environment.FromContext(ctx)
+		return StartSenderToNamespacedResourceTLS(gvr, name, env.Namespace(), caCerts)(ctx, m)
+	}
+}
+
+// StartSenderToNamespacedResourceTLS starts the sender in the eventshub pointing to the provided namespaced resource.
+// `caCerts` parameter is optional, if nil, it will fall back to use the addressable CA certs.
+// This can be used together with InputEvent, AddTracing, EnableIncrementalId, InputEncoding and InputHeader options
+func StartSenderToNamespacedResourceTLS(gvr schema.GroupVersionResource, name, namespace string, caCerts *string) EventsHubOption {
+	return func(ctx context.Context, m map[string]string) error {
+		u, err := k8s.NamespacedAddress(ctx, gvr, name, namespace)
 		if err != nil {
 			return err
 		}
@@ -114,6 +133,7 @@ func StartSenderToResourceTLS(gvr schema.GroupVersionResource, name string, caCe
 		if caCerts == nil && u.CACerts != nil {
 			caCerts = u.CACerts
 		}
+
 		return compose(StartSenderURLTLS(u.URL.String(), caCerts), oidcSinkAudience(u.Audience))(ctx, m)
 	}
 }
@@ -135,6 +155,13 @@ func StartSenderURLTLS(sink string, caCerts *string) EventsHubOption {
 			envs["SINK"] = sink
 			return nil
 		})
+}
+
+func IssuerRef(kind, name string) EventsHubOption {
+	return compose(
+		envAdditive(tlsIssuerKind, kind),
+		envAdditive(tlsIssuerName, name),
+	)
 }
 
 // --- Receiver options
@@ -200,6 +227,11 @@ func DropEventsResponseHeaders(headers map[string]string) EventsHubOption {
 	return compose(
 		envOptionalOpt("SKIP_RESPONSE_HEADERS", headerEnvConfigString),
 	)
+}
+
+// OIDCReceiverAudience sets the expected audience for received OIDC tokens on the receiver side
+func OIDCReceiverAudience(aud string) EventsHubOption {
+	return compose(envOption(OIDCReceiverAudienceEnv, aud), envOIDCEnabled())
 }
 
 // --- Sender options
@@ -281,6 +313,11 @@ func OIDCExpiredToken() EventsHubOption {
 // OIDCInvalidAudience creates an OIDC token with an invalid audience
 func OIDCInvalidAudience() EventsHubOption {
 	return compose(envOption(OIDCGenerateInvalidAudienceTokenEnv, "true"), envOIDCEnabled())
+}
+
+// OIDCSinkAudience sets the Audience of the Sink
+func OIDCSinkAudience(aud string) EventsHubOption {
+	return oidcSinkAudience(&aud)
 }
 
 func oidcSinkAudience(aud *string) EventsHubOption {

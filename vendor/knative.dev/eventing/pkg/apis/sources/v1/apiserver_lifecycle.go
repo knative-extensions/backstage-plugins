@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,6 +84,7 @@ func (s *ApiServerSourceStatus) MarkSink(addr *duckv1.Addressable) {
 	if addr != nil {
 		s.SinkURI = addr.URL
 		s.SinkCACerts = addr.CACerts
+		s.SinkAudience = addr.Audience
 		apiserverCondSet.Manage(s).MarkTrue(ApiServerConditionSinkProvided)
 	} else {
 		apiserverCondSet.Manage(s).MarkFalse(ApiServerConditionSinkProvided, "SinkEmpty", "Sink has resolved to empty.%s", "")
