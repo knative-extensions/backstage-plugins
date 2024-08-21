@@ -25,7 +25,7 @@ function test_plugins() {
   npm install @backstage/cli -g
   yarn backstage-cli repo lint
   yarn tsc
-  yarn test
+  yarn test --watchAll=false
   yarn build:all
   popd
 }
