@@ -21,8 +21,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/../vendor/knative.dev/hack/e2e-tests.sh"
 function test_plugins() {
   echo "Building and testing Backstage plugins"
   pushd ./backstage
-  nvm use 20
-  node --version
   yarn --prefer-offline --frozen-lockfile
   npm install @backstage/cli -g
   yarn backstage-cli repo lint
