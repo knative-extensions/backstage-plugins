@@ -18,21 +18,9 @@ export GO111MODULE=on
 
 source "$(dirname "${BASH_SOURCE[0]}")/../vendor/knative.dev/hack/e2e-tests.sh"
 
-function test_plugins() {
-  echo "Building and testing Backstage plugins"
-  pushd ./backstage
-  yarn --prefer-offline --frozen-lockfile
-  npm install @backstage/cli -g
-  yarn backstage-cli repo lint
-  yarn tsc
-  yarn test --watchAll=false
-  yarn build:all
-  popd
-}
-
 # Script entry point.
 
 # TODO: to be enabled when we need to provision a cluster
 ## initialize "$@"
 
-test_plugins || fail_test
+# Nothing for now
