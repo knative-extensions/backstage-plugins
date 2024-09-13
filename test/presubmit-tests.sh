@@ -26,4 +26,19 @@ export DISABLE_MD_LINTING=1
 
 source $(dirname "$0")/../vendor/knative.dev/hack/presubmit-tests.sh
 
+function unit_tests() {
+  header "Running Go unit tests"
+  default_unit_test_runner || fail_test "Go unit tests failed"
+
+  header "Building and testing Backstage plugins"
+  pushd ./backstage
+  yarn --prefer-offline --frozen-lockfile || fail_test "failed to build plugins"
+  npm install @backstage/cli -g
+  yarn backstage-cli repo lint || fail_test "failed to initialize repo"
+  yarn tsc || fail_test "failed to bundle plugins"
+  yarn test --watchAll=false || fail_test "failed to test plugins"
+  yarn build:all || fail_test "failed to build all plugins"
+  popd
+}
+
 main $@
