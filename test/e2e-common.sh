@@ -39,9 +39,6 @@ readonly PREVIOUS_RELEASE_URL="${PREVIOUS_RELEASE_URL:-"https://github.com/knati
 
 readonly EVENTING_CONFIG=${EVENTING_CONFIG:-"./third_party/eventing-latest/"}
 
-# Vendored eventing test images.
-readonly VENDOR_EVENTING_TEST_IMAGES="vendor/knative.dev/eventing/test/test_images/"
-
 export SYSTEM_NAMESPACE="knative-eventing"
 export CLUSTER_SUFFIX=${CLUSTER_SUFFIX:-"cluster.local"}
 
@@ -73,18 +70,12 @@ function knative_eventing() {
   fi
 
   ! kubectl patch horizontalpodautoscalers.autoscaling -n knative-eventing eventing-webhook -p '{"spec": {"minReplicas": '${REPLICAS}'}}'
-
-  # Publish test images.
-  echo ">> Publishing test images from eventing"
-  ./test/upload-test-images.sh ${VENDOR_EVENTING_TEST_IMAGES} e2e || fail_test "Error uploading test images"
 }
 
 function build_components_from_source() {
   header "Building components from source"
 
   [ -f "${BACKEND_ARTIFACT}" ] && rm "${BACKEND_ARTIFACT}"
-  # TODO: later
-  #[ -f "${BACKEND_POST_INSTALL_ARTIFACT}" ] && rm "${BACKEND_POST_INSTALL_ARTIFACT}"
 
   header "Backend setup"
   backend_setup || fail_test "Failed to set up backend"
@@ -107,8 +98,6 @@ function install_head() {
   echo "Installing head"
 
   kubectl apply -f "${BACKEND_ARTIFACT}" || return $?
-  # TODO: later
-  # kubectl apply -f "${BACKEND_POST_INSTALL_ARTIFACT}" || return $?
 
   # Restore test config.
   kubectl replace -f ./test/config/100-config-tracing.yaml

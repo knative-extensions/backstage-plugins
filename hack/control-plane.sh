@@ -17,11 +17,8 @@
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")"/label.sh
 
 readonly BACKEND_CONFIG_DIR=backends/config/100-eventmesh
-readonly BACKEND_POST_INSTALL_CONFIG_DIR=backends/config/post-install
 
 # Note: do not change this function name, it's used during releases.
 function backend_setup() {
   ko resolve ${KO_FLAGS} -Rf "${BACKEND_CONFIG_DIR}" | "${LABEL_YAML_CMD[@]}" >>"${BACKEND_ARTIFACT}" || return $?
-  # TODO: later
-  # ko resolve ${KO_FLAGS} -Rf "${BACKEND_POST_INSTALL_CONFIG_DIR}" | "${LABEL_YAML_CMD[@]}" >>"${BACKEND_POST_INSTALL_ARTIFACT}" || return $?
 }

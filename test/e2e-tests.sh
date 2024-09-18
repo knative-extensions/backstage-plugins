@@ -22,5 +22,5 @@ source "$(dirname "$0")/e2e-common.sh"
 initialize "$@"
 
 echo "Running E2E tests"
-go_test_e2e -timeout=1h -parallel=20 ./backends/tests/e2e || fail_test
+go_test_e2e -timeout=1h -parallel=20 ./backends/tests/e2e/... || fail_test
 success
