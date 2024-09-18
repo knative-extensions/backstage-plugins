@@ -99,7 +99,7 @@ func (h HttpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // - Do the same for event types.
 // - Fetch the triggers, find out what event types they're subscribed to and find out the resources that are receiving the events.
 // - Make a connection between the event types and the subscribers. Store this connection in the eventType struct.
-func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicClient *dynamic.DynamicClient, logger *zap.SugaredLogger) (EventMesh, error) {
+func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) (EventMesh, error) {
 	// fetch the brokers and convert them to the representation that's consumed by the Backstage plugin.
 	convertedBrokers, err := fetchBrokers(clientset, logger)
 	if err != nil {
@@ -167,7 +167,7 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 
 // processTrigger processes the trigger and updates the ETs that the trigger is subscribed to.
 // The consumedBy fields of ETs are updated with the subscriber's Backstage ID.
-func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, dynamicClient *dynamic.DynamicClient, logger *zap.SugaredLogger) error {
+func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap map[string]*Broker, etByNamespacedName map[string]*EventType, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) error {
 	// if the trigger has no subscriber, we can skip it, there's no relation to show on Backstage side
 	if trigger.Spec.Subscriber.Ref == nil {
 		logger.Debugw("Trigger has no subscriber ref; cannot process this trigger", "namespace", trigger.Namespace, "trigger", trigger.Name)

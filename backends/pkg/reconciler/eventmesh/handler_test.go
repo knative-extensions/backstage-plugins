@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	"k8s.io/client-go/dynamic/fake"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"knative.dev/pkg/injection/clients/dynamicclient"
 
 	"github.com/google/go-cmp/cmp"
@@ -528,7 +528,7 @@ func TestBuildEventMesh(t *testing.T) {
 		_ = corev1.AddToScheme(sc)
 		_ = eventingv1.AddToScheme(sc)
 
-		fakeDynamicClient := fake.NewSimpleDynamicClient(sc, tt.extraObjects...)
+		fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(sc, tt.extraObjects...)
 
 		ctx := context.TODO()
 		ctx = context.WithValue(ctx, dynamicclient.Key{}, fakeDynamicClient)
@@ -536,7 +536,7 @@ func TestBuildEventMesh(t *testing.T) {
 		fakeClient := fakeclientset.NewSimpleClientset(v1beta2objects...)
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildEventMesh(ctx, fakeClient, logger)
+			got, err := BuildEventMesh(ctx, fakeClient, fakeDynamicClient, logger)
 			if (err != nil) != tt.error {
 				t.Errorf("BuildEventMesh() error = %v, error %v", err, tt.error)
 				return
