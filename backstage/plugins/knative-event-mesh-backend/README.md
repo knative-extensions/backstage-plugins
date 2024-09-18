@@ -153,7 +153,7 @@ To get the token, you can run the following command:
 kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode
 ```
 
-Run a sanity check to see if the token works:
+Run a quick check to see if the token works:
 
 ```bash
 export KUBE_API_SERVER_URL=$(kubectl config view --minify --output jsonpath="{.clusters[*].cluster.server}") # e.g. "https://192.168.2.151:16443"
@@ -163,20 +163,20 @@ curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KUBE_API_SERVER_URL}
 # But, should not see an error
 ```
 
-Run a second sanity check to see if the token works with the backend
+Run a second quick check to see if the token works with the backend
 
 ```bash
 KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080 # or the URL of the backend
 export KUBE_SA_TOKEN=$(kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode)
 curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KNATIVE_EVENT_MESH_BACKEND}" | json_pp
-# Should see the response from the backend such as 
+# Should see the response from the backend such as
 # {
 #   "brokers" : [...],
 #   "eventTypes" : [...]
 #}
 ```
 
-If these sanity checks work, you can use the token in the `app-config.yaml` file as the value
+If these quick checks work, you can use the token in the `app-config.yaml` file as the value
 of `KNATIVE_EVENT_MESH_TOKEN`.
 
 ### Legacy Backend Installation
