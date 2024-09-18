@@ -2,10 +2,11 @@ package eventmesh
 
 import (
 	"context"
+	"log"
+
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/injection"
 	"knative.dev/pkg/logging"
-	"log"
 )
 
 func NewController(ctx context.Context) {
