@@ -44,44 +44,49 @@ type EventMesh struct {
 const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
 
 // HttpHandler is the HTTP handler that's used to serve the event mesh data.
-func HttpHandler(ctx context.Context, inClusterConfig *rest.Config) func(w http.ResponseWriter, req *http.Request) {
-	logger := logging.FromContext(ctx)
+type HttpHandler struct {
+	ctx             context.Context
+	inClusterConfig *rest.Config
+}
 
-	// this handler simply calls the event mesh builder and returns the result as JSON
-	return func(w http.ResponseWriter, req *http.Request) {
-		logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
+// This handler simply calls the event mesh builder and returns the result as JSON
+func (h HttpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	logger := logging.FromContext(h.ctx)
 
-		config := rest.CopyConfig(inClusterConfig)
-		authHeader := req.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
-			return
-		}
-		// header value is in this format: "Bearer <token>"
-		// we only need the token part
-		if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
-			http.Error(w, "Invalid Authorization header. Should start with `Bearer `", http.StatusUnauthorized)
-			return
-		}
-		config.BearerToken = authHeader[7:]
-		clientset, err := versioned.NewForConfig(config)
-		if err != nil {
-			log.Fatalf("Error creating clientset: %v", err)
-		}
+	w.Header().Add("Content-Type", "application/json")
 
-		eventMesh, err := BuildEventMesh(ctx, clientset, logger)
-		if err != nil {
-			logger.Errorw("Error building event mesh", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
 
-		err = json.NewEncoder(w).Encode(eventMesh)
-		if err != nil {
-			logger.Errorw("Error encoding event mesh", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	config := rest.CopyConfig(h.inClusterConfig)
+	authHeader := req.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+		return
+	}
+	// header value is in this format: "Bearer <token>"
+	// we only need the token part
+	if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+		http.Error(w, "Invalid Authorization header. Should start with `Bearer `", http.StatusUnauthorized)
+		return
+	}
+	config.BearerToken = authHeader[7:]
+	clientset, err := versioned.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Error creating clientset: %v", err)
+	}
+
+	eventMesh, err := BuildEventMesh(h.ctx, clientset, logger)
+	if err != nil {
+		logger.Errorw("Error building event mesh", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(eventMesh)
+	if err != nil {
+		logger.Errorw("Error encoding event mesh", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
