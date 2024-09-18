@@ -18,13 +18,14 @@
 # at https://github.com/knative/test-infra/tree/master/ci
 
 source $(dirname $0)/../vendor/knative.dev/hack/release.sh
+source $(dirname $0)/artifacts-env.sh
 
 export GO111MODULE=on
 
 # Yaml files to generate, and the source config dir for them.
 declare -A COMPONENTS
 COMPONENTS=(
-  ["eventmesh.yaml"]="backends/config/100-eventmesh"
+  ["${BACKEND_ARTIFACT}"]="backends/config/100-eventmesh"
 )
 readonly COMPONENTS
 

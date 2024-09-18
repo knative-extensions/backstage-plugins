@@ -16,11 +16,11 @@
 
 export GO111MODULE=on
 
-source "$(dirname "${BASH_SOURCE[0]}")/../vendor/knative.dev/hack/e2e-tests.sh"
+source "$(dirname "$0")/e2e-common.sh"
 
 # Script entry point.
+initialize "$@"
 
-# TODO: to be enabled when we need to provision a cluster
-## initialize "$@"
-
-# Nothing for now
+echo "Running E2E tests"
+go_test_e2e -timeout=1h -parallel=20 ./backends/tests/e2e/... || fail_test
+success
