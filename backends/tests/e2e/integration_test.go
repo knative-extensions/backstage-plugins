@@ -36,34 +36,10 @@ func VerifyBackstageBackendAuthentication() *feature.Feature {
 
 	authenticatedClientName := feature.MakeRandomK8sName("authenticated-client")
 	unauthenticatedClientName := feature.MakeRandomK8sName("unauthenticated-client")
-	//SAName := "eventmesh-backend-user-service-account"
 	SANamespace := "eventmesh-backend-user-namespace"
 	SecretName := "eventmesh-backend-user-secret"
 
 	f.Setup("request with authenticated client", func(ctx context.Context, t feature.T) {
-		//tr := &authenticationv1.TokenRequest{
-		//	TypeMeta:   metav1.TypeMeta{},
-		//	ObjectMeta: metav1.ObjectMeta{},
-		//	Spec: authenticationv1.TokenRequestSpec{
-		//		Audiences:         nil,
-		//		ExpirationSeconds: nil,
-		//		BoundObjectRef: &authenticationv1.BoundObjectReference{
-		//			Kind:       "",
-		//			APIVersion: "",
-		//			Name:       "",
-		//			UID:        "",
-		//		},
-		//	},
-		//	Status: authenticationv1.TokenRequestStatus{},
-		//}
-		//tr, err := kubeclient.Get(ctx).
-		//	CoreV1().
-		//	ServiceAccounts(SANamespace).
-		//	CreateToken(ctx, SAName, tr, metav1.CreateOptions{})
-		//if err != nil {
-		//	t.Fatal("Failed to create token for SA", err)
-		//}
-
 		secret, err := kubeclient.Get(ctx).CoreV1().Secrets(SANamespace).Get(ctx, SecretName, metav1.GetOptions{})
 		if err != nil {
 			t.Fatal("Failed to get secret", err)
@@ -72,21 +48,21 @@ func VerifyBackstageBackendAuthentication() *feature.Feature {
 		token := string(secret.Data["token"])
 
 		eventshub.Install(authenticatedClientName,
-			eventshub.StartSenderURL("TODO_backstage_backend_url"),
-			//eventshub.InputHeader("Authorization", "Bearer "+tr.Status.Token),
+			eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080"),
 			eventshub.InputHeader("Authorization", "Bearer "+token),
 			eventshub.InputMethod("GET"),
 		)(ctx, t)
 	})
 	f.Setup("request with unauthenticated client", eventshub.Install(
 		unauthenticatedClientName,
-		eventshub.StartSenderURL("TODO_backstage_backend_url"),
+		eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080"),
+		eventshub.InputHeader("Foo", "Bar"),
 		eventshub.InputMethod("GET")),
 	)
 
 	f.Assert("assert response with authenticated client", assert.OnStore(authenticatedClientName).
 		Match(assert.MatchKind(eventshub.EventResponse)).
-		Match(assert.MatchStatusCode(202)).
+		Match(assert.MatchStatusCode(200)).
 		AtLeast(1))
 	f.Assert("assert response with unauthenticated client", assert.OnStore(unauthenticatedClientName).
 		Match(assert.MatchKind(eventshub.EventResponse)).
