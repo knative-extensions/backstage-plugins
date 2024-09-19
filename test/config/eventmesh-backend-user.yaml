@@ -1,0 +1,72 @@
+# Copyright 2024 The Knative Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventmesh-backend-user-namespace
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eventmesh-backend-user-service-account
+  namespace: eventmesh-backend-user-namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: eventmesh-backend-user-cluster-role
+rules:
+  # permissions for eventtypes, brokers and triggers
+  - apiGroups:
+      - "eventing.knative.dev"
+    resources:
+      - brokers
+      - eventtypes
+      - triggers
+    verbs:
+      - get
+      - list
+      - watch
+  # permissions to get subscribers for triggers
+  # as subscribers can be any resource, we need to give access to all resources
+  # we fetch subscribers one by one, we only need `get` verb
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: eventmesh-backend-user-cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: eventmesh-backend-user-service-account
+    namespace: eventmesh-backend-user-namespace
+roleRef:
+  kind: ClusterRole
+  name: eventmesh-backend-user-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eventmesh-backend-user-secret
+  namespace: eventmesh-backend-user-namespace
+  annotations:
+    kubernetes.io/service-account.name: eventmesh-backend-user-service-account
+type: kubernetes.io/service-account-token
