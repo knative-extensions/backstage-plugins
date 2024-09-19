@@ -23,4 +23,7 @@ import (
 	_ "knative.dev/eventing/hack"
 	_ "knative.dev/hack"
 	_ "knative.dev/pkg/hack"
+
+	// eventshub is a cloudevents sender/receiver utility for e2e testing.
+	_ "knative.dev/reconciler-test/cmd/eventshub"
 )
