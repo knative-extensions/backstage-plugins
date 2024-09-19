@@ -158,7 +158,14 @@ kubectl port-forward -n knative-eventing svc/eventmesh-backend 8080:8080
 
 # check that the backend is running
 curl -v http://localhost:8080/
+```
 
+You will get a `401 Unauthorized` response, which is expected.
+
+Now you need to create a token to authenticate with the backend. That is documented in
+the [Event Mesh plugin README file](./backstage/plugins/knative-event-mesh-backend/README.md).
+
+```bash
 {
   "eventTypes":[{"name":"test-event-type","namespace":"default","type":"foo","uid":"8a44f223-c2e5-4cc1-a578-cc81c6ea2898"}],
   "brokers":[{"name":"default","namespace":"default","uid":"d44e3cfa-5866-43fd-a8ed-b3a3436beecd"}]

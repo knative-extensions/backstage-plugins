@@ -4,9 +4,8 @@ import (
 	"context"
 	"log"
 
-	"k8s.io/client-go/rest"
-
 	"knative.dev/eventing/pkg/kncloudevents"
+	"knative.dev/pkg/injection"
 	"knative.dev/pkg/logging"
 )
 
@@ -25,10 +24,7 @@ func startWebServer(ctx context.Context) {
 
 	logger.Infow("Starting eventmesh-backend webserver")
 
-	noTokenConfig, err := rest.InClusterConfig()
-	if err != nil {
-		log.Fatalf("Error getting in-cluster config: %v", err)
-	}
+	noTokenConfig := injection.ParseAndGetRESTConfigOrDie()
 
 	noTokenConfig.BearerToken = ""
 	noTokenConfig.Username = ""
@@ -36,6 +32,6 @@ func startWebServer(ctx context.Context) {
 	noTokenConfig.BearerTokenFile = ""
 
 	r := kncloudevents.NewHTTPEventReceiver(8080)
-	err = r.StartListen(ctx, HttpHandler{ctx, noTokenConfig})
+	err := r.StartListen(ctx, HttpHandler{ctx, noTokenConfig})
 	log.Fatal(err)
 }
