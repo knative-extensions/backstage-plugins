@@ -19,6 +19,7 @@ export function readKnativeEventMeshProviderConfigs(config:Config):KnativeEventM
 
 function readKnativeEventMeshProviderConfig(id:string, config:Config):KnativeEventMeshProviderConfig {
     const baseUrl = config.getString('baseUrl');
+    const token = config.getString('token');
 
     const schedule = config.has('schedule')
         ? readTaskScheduleDefinitionFromConfig(config.getConfig('schedule'))
@@ -28,5 +29,6 @@ function readKnativeEventMeshProviderConfig(id:string, config:Config):KnativeEve
         id,
         baseUrl,
         schedule,
+        token,
     };
 }
