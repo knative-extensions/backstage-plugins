@@ -166,7 +166,7 @@ curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KUBE_API_SERVER_URL}
 Run a second quick check to see if the token works with the backend
 
 ```bash
-KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080 # or the URL of the backend
+export KNATIVE_EVENT_MESH_BACKEND=http://localhost:8080 # or the URL of the backend
 export KUBE_SA_TOKEN=$(kubectl get secret my-eventmesh-backend-secret -o jsonpath='{.data.token}' | base64 --decode)
 curl -k -H "Authorization: Bearer $KUBE_SA_TOKEN" -X GET "${KNATIVE_EVENT_MESH_BACKEND}" | json_pp
 # Should see the response from the backend such as
@@ -226,7 +226,7 @@ To install on the new backend system, add the following into the `packages/backe
 ```ts title=packages/backend/index.ts
 import { createBackend } from '@backstage/backend-defaults';
 
-const backend = const backend = createBackend();
+const backend = createBackend();
 
 // Other plugins/modules
 
