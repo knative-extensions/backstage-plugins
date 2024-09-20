@@ -20,7 +20,7 @@ metadata:
     eventing.knative.dev/source: "true"
     duck.knative.dev/source: "true"
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
   annotations:
     # TODO add schemas
@@ -59,7 +59,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'ApiServerSource is an event source that brings Kubernetes API server events into Knative.'
@@ -307,7 +307,7 @@ metadata:
   labels:
     knative.dev/crd-install: "true"
     duck.knative.dev/addressable: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: eventing.knative.dev
@@ -316,7 +316,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'Broker collects a pool of events that are consumable using Triggers. Brokers provide a well-known endpoint for event delivery that senders can use with minimal knowledge of the event routing strategy. Subscribers use Triggers to request delivery of events from a Broker''s pool to a specific URL or Addressable endpoint.'
@@ -522,7 +522,7 @@ metadata:
     knative.dev/crd-install: "true"
     messaging.knative.dev/subscribable: "true"
     duck.knative.dev/addressable: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: messaging.knative.dev
@@ -531,7 +531,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       additionalPrinterColumns:
         - name: URL
           type: string
@@ -880,7 +880,7 @@ metadata:
     eventing.knative.dev/source: "true"
     duck.knative.dev/source: "true"
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
   name: containersources.sources.knative.dev
 spec:
@@ -890,7 +890,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'ContainerSource is an event source that starts a container image which generates events under certain situations and sends messages to a sink URI'
@@ -1055,7 +1055,7 @@ metadata:
   name: eventpolicies.eventing.knative.dev
   labels:
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: eventing.knative.dev
@@ -1064,7 +1064,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -1248,7 +1248,7 @@ spec:
   conversion:
     strategy: Webhook
     webhook:
-      conversionReviewVersions: [ "v1", "v1beta1" ]
+      conversionReviewVersions: ["v1", "v1beta1"]
       clientConfig:
         service:
           name: eventing-webhook
@@ -1274,7 +1274,7 @@ metadata:
   name: eventtypes.eventing.knative.dev
   labels:
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: eventing.knative.dev
@@ -1283,7 +1283,7 @@ spec:
       served: true
       storage: false
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -1397,7 +1397,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -1511,7 +1511,7 @@ spec:
       served: true
       storage: false
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -1639,7 +1639,7 @@ spec:
   conversion:
     strategy: Webhook
     webhook:
-      conversionReviewVersions: [ "v1", "v1beta1" ]
+      conversionReviewVersions: ["v1", "v1beta1"]
       clientConfig:
         service:
           name: eventing-webhook
@@ -1667,7 +1667,7 @@ metadata:
   labels:
     knative.dev/crd-install: "true"
     duck.knative.dev/addressable: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: sinks.knative.dev
@@ -1676,7 +1676,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'JobSink triggers long-running jobs when an event occur.'
@@ -1818,7 +1818,7 @@ metadata:
   labels:
     knative.dev/crd-install: "true"
     duck.knative.dev/addressable: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: flows.knative.dev
@@ -1827,7 +1827,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'Parallel defines conditional branches that will be wired in series through Channels and Subscriptions.'
@@ -2346,7 +2346,7 @@ metadata:
     eventing.knative.dev/source: "true"
     duck.knative.dev/source: "true"
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
   annotations:
     # TODO add schema
@@ -2365,7 +2365,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -2521,7 +2521,7 @@ spec:
       served: true
       storage: false
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -2691,7 +2691,7 @@ spec:
   conversion:
     strategy: Webhook
     webhook:
-      conversionReviewVersions: [ "v1", "v1beta1" ]
+      conversionReviewVersions: ["v1", "v1beta1"]
       clientConfig:
         service:
           name: eventing-webhook
@@ -2718,7 +2718,7 @@ metadata:
   labels:
     knative.dev/crd-install: "true"
     duck.knative.dev/addressable: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: flows.knative.dev
@@ -2727,7 +2727,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'Sequence defines a sequence of Subscribers that will be wired in series through Channels and Subscriptions.'
@@ -3102,7 +3102,7 @@ metadata:
     duck.knative.dev/source: "true"
     duck.knative.dev/binding: "true"
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
   name: sinkbindings.sources.knative.dev
 spec:
@@ -3112,7 +3112,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'SinkBinding describes a Binding that is also a Source. The `sink` (from the Source duck) is resolved to a URL and then projected into the `subject` by augmenting the runtime contract of the referenced containers to have a `K_SINK` environment variable holding the endpoint to which to send cloud events.'
@@ -3317,7 +3317,7 @@ metadata:
   name: subscriptions.messaging.knative.dev
   labels:
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: messaging.knative.dev
@@ -3326,7 +3326,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       schema:
         openAPIV3Schema:
           description: 'Subscription routes events received on a Channel to a DNS name and corresponds to the subscriptions.channels.knative.dev CRD.'
@@ -3579,7 +3579,7 @@ metadata:
   name: triggers.eventing.knative.dev
   labels:
     knative.dev/crd-install: "true"
-    app.kubernetes.io/version: "20240916-608e76cfa"
+    app.kubernetes.io/version: "20240919-17088813b"
     app.kubernetes.io/name: knative-eventing
 spec:
   group: eventing.knative.dev
@@ -3588,7 +3588,7 @@ spec:
       served: true
       storage: true
       subresources:
-        status: { }
+        status: {}
       additionalPrinterColumns:
         - name: Broker
           type: string
