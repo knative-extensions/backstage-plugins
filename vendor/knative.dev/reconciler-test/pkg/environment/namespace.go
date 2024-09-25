@@ -51,6 +51,38 @@ func getNamespace(ctx context.Context) string {
 	return ns.(string)
 }
 
+type namespaceTransformFuncsKey struct{}
+
+type NamespaceTransformFunc func(ns *corev1.Namespace) error
+
+func WithNamespaceTransformFuncs(transforms ...NamespaceTransformFunc) EnvOpts {
+	return func(ctx context.Context, env Environment) (context.Context, error) {
+		return withNamespaceTransformFunc(ctx, transforms...), nil
+	}
+}
+
+func getNamespaceTransformFuncs(ctx context.Context) []NamespaceTransformFunc {
+	r := ctx.Value(namespaceTransformFuncsKey{})
+	if r == nil {
+		return nil
+	}
+	return r.([]NamespaceTransformFunc)
+}
+
+func withNamespaceTransformFunc(ctx context.Context, transforms ...NamespaceTransformFunc) context.Context {
+	t := ctx.Value(namespaceTransformFuncsKey{})
+	if t == nil {
+		t = []NamespaceTransformFunc{}
+	}
+	existings := t.([]NamespaceTransformFunc)
+
+	r := make([]NamespaceTransformFunc, 0, len(existings)+len(transforms))
+	r = append(r, existings...)
+	r = append(r, transforms...)
+
+	return context.WithValue(ctx, namespaceTransformFuncsKey{}, r)
+}
+
 // CreateNamespaceIfNeeded creates a new namespace if it does not exist.
 func (mr *MagicEnvironment) CreateNamespaceIfNeeded() error {
 	c := kubeclient.Get(mr.c)
@@ -67,11 +99,21 @@ func (mr *MagicEnvironment) CreateNamespaceIfNeeded() error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        mr.namespace,
 				Annotations: map[string]string{},
+				Labels: map[string]string{
+					"app.kubernetes.io/component": "reconciler-test",
+					"app.kubernetes.io/name":      "reconciler-test",
+				},
 			},
 		}
 
 		if cfg := GetIstioConfig(mr.c); cfg.Enabled {
 			withIstioNamespaceLabel(nsSpec)
+		}
+
+		for _, nsTransform := range getNamespaceTransformFuncs(mr.c) {
+			if err := nsTransform(nsSpec); err != nil {
+				return fmt.Errorf("namespace transform function failed: %w", err)
+			}
 		}
 
 		_, err = c.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
@@ -122,12 +164,26 @@ func (mr *MagicEnvironment) CreateNamespaceIfNeeded() error {
 			return fmt.Errorf("error copying the image pull Secret: %s", err)
 		}
 
-		_, err = c.CoreV1().ServiceAccounts(mr.namespace).Patch(context.Background(), sa.Name, types.StrategicMergePatchType,
-			[]byte(`{"imagePullSecrets":[{"name":"`+mr.imagePullSecretName+`"}]}`), metav1.PatchOptions{})
+		for _, secret := range sa.ImagePullSecrets {
+			if secret.Name == mr.imagePullSecretName {
+				return nil
+			}
+		}
+
+		// Prevent overwriting existing imagePullSecrets
+		patch := `[{"op":"add","path":"/imagePullSecrets/-","value":{"name":"` + mr.imagePullSecretName + `"}}]`
+		if len(sa.ImagePullSecrets) == 0 {
+			patch = `[{"op":"add","path":"/imagePullSecrets","value":[{"name":"` + mr.imagePullSecretName + `"}]}]`
+		}
+
+		_, err = c.CoreV1().ServiceAccounts(mr.namespace).Patch(context.Background(), sa.Name, types.JSONPatchType,
+			[]byte(patch), metav1.PatchOptions{})
 		if err != nil {
-			return fmt.Errorf("patch failed on NS/SA (%s/%s): %s", mr.namespace, sa.Name, err)
+			return fmt.Errorf("patch failed on NS/SA (%s/%s): %w",
+				mr.namespace, sa.Name, err)
 		}
 	}
+
 	return nil
 }
 

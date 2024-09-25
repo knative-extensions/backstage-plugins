@@ -54,7 +54,12 @@ type Assertion func(s *corev1.Secret) error
 
 func IsPresent(name string, assertions ...Assertion) feature.StepFn {
 	return func(ctx context.Context, t feature.T) {
-		ns := environment.FromContext(ctx).Namespace()
+		IsPresentInNamespace(name, environment.FromContext(ctx).Namespace(), assertions...)(ctx, t)
+	}
+}
+
+func IsPresentInNamespace(name string, ns string, assertions ...Assertion) feature.StepFn {
+	return func(ctx context.Context, t feature.T) {
 		interval, timeout := environment.PollTimingsFromContext(ctx)
 
 		var lastErr error
@@ -69,7 +74,8 @@ func IsPresent(name string, assertions ...Assertion) feature.StepFn {
 			return true, nil
 		})
 		if err != nil {
-			t.Errorf("failed to get secret %s/%s: %w", ns, name, lastErr)
+			t.Errorf("failed to get secret %s/%s: %v", ns, name, lastErr)
+			return
 		}
 
 		secret, err := kubeclient.Get(ctx).CoreV1().

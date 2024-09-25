@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import (
 	pkgduckv1 "knative.dev/pkg/apis/duck/v1"
 )
 
-var pCondSet = apis.NewLivingConditionSet(ParallelConditionReady, ParallelConditionChannelsReady, ParallelConditionSubscriptionsReady, ParallelConditionAddressable)
+var pCondSet = apis.NewLivingConditionSet(ParallelConditionReady, ParallelConditionChannelsReady, ParallelConditionSubscriptionsReady, ParallelConditionAddressable, ParallelConditionEventPoliciesReady)
 
 const (
 	// ParallelConditionReady has status True when all subconditions below have been set to True.
@@ -42,6 +42,10 @@ const (
 	// ParallelConditionAddressable has status true when this Parallel meets
 	// the Addressable contract and has a non-empty hostname.
 	ParallelConditionAddressable apis.ConditionType = "Addressable"
+
+	// ParallelConditionEventPoliciesReady has status True when applying EventPolicies for this
+	// Parallel are ready or if there are no EventPolicies.
+	ParallelConditionEventPoliciesReady apis.ConditionType = "EventPoliciesReady"
 )
 
 // GetConditionSet retrieves the condition set for this resource. Implements the KRShaped interface.
@@ -80,6 +84,7 @@ func (ps *ParallelStatus) PropagateSubscriptionStatuses(filterSubscriptions []*m
 	if ps.BranchStatuses == nil || len(subscriptions) != len(ps.BranchStatuses) {
 		ps.BranchStatuses = make([]ParallelBranchStatus, len(subscriptions))
 	}
+	ps.Auth = nil
 	allReady := true
 	// If there are no subscriptions, treat that as a False branch. Could go either way, but this seems right.
 	if len(subscriptions) == 0 {
@@ -125,6 +130,19 @@ func (ps *ParallelStatus) PropagateSubscriptionStatuses(filterSubscriptions []*m
 			allReady = false
 		}
 
+		if fs.Status.Auth != nil && fs.Status.Auth.ServiceAccountName != nil {
+			if ps.Auth == nil {
+				ps.Auth = &pkgduckv1.AuthStatus{}
+			}
+			ps.Auth.ServiceAccountNames = append(ps.Auth.ServiceAccountNames, *fs.Status.Auth.ServiceAccountName)
+		}
+
+		if s.Status.Auth != nil && s.Status.Auth.ServiceAccountName != nil {
+			if ps.Auth == nil {
+				ps.Auth = &pkgduckv1.AuthStatus{}
+			}
+			ps.Auth.ServiceAccountNames = append(ps.Auth.ServiceAccountNames, *s.Status.Auth.ServiceAccountName)
+		}
 	}
 	if allReady {
 		pCondSet.Manage(ps).MarkTrue(ParallelConditionSubscriptionsReady)
@@ -202,4 +220,24 @@ func (ps *ParallelStatus) setAddress(address *pkgduckv1.Addressable) {
 	} else {
 		pCondSet.Manage(ps).MarkTrue(ParallelConditionAddressable)
 	}
+}
+
+// MarkEventPoliciesFailed marks the ParallelConditionEventPoliciesReady as False with the given reason and message.
+func (ps *ParallelStatus) MarkEventPoliciesFailed(reason, messageFormat string, messageA ...interface{}) {
+	pCondSet.Manage(ps).MarkFalse(ParallelConditionEventPoliciesReady, reason, messageFormat, messageA...)
+}
+
+// MarkEventPoliciesUnknown marks the ParallelConditionEventPoliciesReady as Unknown with the given reason and message.
+func (ps *ParallelStatus) MarkEventPoliciesUnknown(reason, messageFormat string, messageA ...interface{}) {
+	pCondSet.Manage(ps).MarkUnknown(ParallelConditionEventPoliciesReady, reason, messageFormat, messageA...)
+}
+
+// MarkEventPoliciesTrue marks the ParallelConditionEventPoliciesReady as True.
+func (ps *ParallelStatus) MarkEventPoliciesTrue() {
+	pCondSet.Manage(ps).MarkTrue(ParallelConditionEventPoliciesReady)
+}
+
+// MarkEventPoliciesTrueWithReason marks the ParallelConditionEventPoliciesReady as True with the given reason and message.
+func (ps *ParallelStatus) MarkEventPoliciesTrueWithReason(reason, messageFormat string, messageA ...interface{}) {
+	pCondSet.Manage(ps).MarkTrueWithReason(ParallelConditionEventPoliciesReady, reason, messageFormat, messageA...)
 }

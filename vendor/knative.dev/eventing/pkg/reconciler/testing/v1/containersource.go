@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@ package testing
 
 import (
 	"context"
+
+	duckv1 "knative.dev/pkg/apis/duck/v1"
 
 	v1 "knative.dev/eventing/pkg/apis/sources/v1"
 
@@ -90,5 +92,15 @@ func WithContainerUnobservedGeneration() ContainerSourceOption {
 		condSet := c.GetConditionSet()
 		condSet.Manage(&c.Status).MarkUnknown(
 			condSet.GetTopLevelConditionType(), "NewObservedGenFailure", "unsuccessfully observed a new generation")
+	}
+}
+
+func WithContainerSourceOIDCServiceAccountName(name string) ContainerSourceOption {
+	return func(c *v1.ContainerSource) {
+		if c.Status.Auth == nil {
+			c.Status.Auth = &duckv1.AuthStatus{}
+		}
+
+		c.Status.Auth.ServiceAccountName = &name
 	}
 }

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -77,6 +77,7 @@ type SubscriptionSpec struct {
 	//   - Kind
 	//   - APIVersion
 	//   - Name
+	//   - Namespace
 	// The resource pointed by this KReference must meet the
 	// contract to the ChannelableSpec duck type. If the resource does not
 	// meet this contract it will be reflected in the Subscription's status.
@@ -180,4 +181,9 @@ func (s *Subscription) GetUntypedSpec() interface{} {
 // GetStatus retrieves the status of the Subscription. Implements the KRShaped interface.
 func (s *Subscription) GetStatus() *duckv1.Status {
 	return &s.Status.Status
+}
+
+// GetCrossNamespaceRef returns the Channel reference for the Subscription. Implements the ResourceInfo interface.
+func (s *Subscription) GetCrossNamespaceRef() duckv1.KReference {
+	return s.Spec.Channel
 }
