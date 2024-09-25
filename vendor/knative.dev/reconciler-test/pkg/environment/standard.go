@@ -53,8 +53,16 @@ type ConfigurationOption func(Configuration) Configuration
 // standard way. The Kube client will be initialized within the
 // context.Context for later use.
 func NewStandardGlobalEnvironment(opts ...ConfigurationOption) GlobalEnvironment {
+	return NewStandardGlobalEnvironmentWithRestConfig(nil, opts...)
+}
+
+// NewStandardGlobalEnvironment will create a new global environment in a
+// standard way. The Kube client will be initialized within the
+// context.Context for later use. It uses the provided rest config
+// when creating the informers.
+func NewStandardGlobalEnvironmentWithRestConfig(cfg *rest.Config, opts ...ConfigurationOption) GlobalEnvironment {
 	opts = append(opts, initIstioFlags())
-	config := resolveConfiguration(opts)
+	config := resolveConfiguration(opts, cfg)
 	ctx := testlog.NewContext(config.Context)
 
 	// environment.InitFlags registers state, level and feature filter flags.
@@ -79,6 +87,22 @@ func NewStandardGlobalEnvironment(opts ...ConfigurationOption) GlobalEnvironment
 	// features to pull Kubernetes clients or the test environment out of the
 	// context passed in the features.
 	var startInformers func()
+
+	if config.Config == nil {
+		config.Config = injection.ParseAndGetRESTConfigOrDie()
+	}
+	// Respect user provided settings, but if omitted customize the default behavior.
+	//
+	// Use 20 times the default QPS and Burst to speed up testing since this client is used by
+	// every running test.
+	multiplier := 20
+	if config.Config.QPS == 0 {
+		config.Config.QPS = rest.DefaultQPS * float32(multiplier)
+	}
+	if config.Config.Burst == 0 {
+		config.Config.Burst = rest.DefaultBurst * multiplier
+	}
+
 	ctx, startInformers = injection.EnableInjectionOrDie(ctx, config.Config)
 
 	// global is used to make instances of Environments, NewGlobalEnvironment
@@ -86,11 +110,11 @@ func NewStandardGlobalEnvironment(opts ...ConfigurationOption) GlobalEnvironment
 	return NewGlobalEnvironment(ctx, startInformers)
 }
 
-func resolveConfiguration(opts []ConfigurationOption) Configuration {
+func resolveConfiguration(opts []ConfigurationOption, restCfg *rest.Config) Configuration {
 	cfg := Configuration{
 		Flags:   commandlineFlags{},
 		Context: signals.NewContext(),
-		Config:  nil,
+		Config:  restCfg,
 	}
 	for _, opt := range opts {
 		cfg = opt(cfg)

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,6 +81,10 @@ const (
 	// SinkBindingConditionOIDCIdentityCreated is configured to indicate whether
 	// the OIDC identity has been created for the sink.
 	SinkBindingConditionOIDCIdentityCreated apis.ConditionType = "OIDCIdentityCreated"
+
+	// SinkBindingConditionOIDCTokenSecretCreated is configured to indicate whether
+	// the secret containing the OIDC token has been created for the sink.
+	SinkBindingConditionOIDCTokenSecretCreated apis.ConditionType = "OIDCTokenSecretCreated"
 )
 
 // SinkBindingStatus communicates the observed state of the SinkBinding (from the controller).
@@ -93,6 +97,10 @@ type SinkBindingStatus struct {
 	// * SinkURI - the current active sink URI that has been configured for the
 	//   Source.
 	duckv1.SourceStatus `json:",inline"`
+
+	// OIDCTokenSecretName is the name of the secret containing the token for
+	// this SinkBindings OIDC authentication
+	OIDCTokenSecretName *string `json:"oidcTokenSecretName,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
