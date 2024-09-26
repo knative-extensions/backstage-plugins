@@ -163,7 +163,7 @@ curl -v http://localhost:8080/
 You will get a `401 Unauthorized` response, which is expected.
 
 Now you need to create a token to authenticate with the backend. That is documented in
-the [Event Mesh plugin README file](./backstage/plugins/knative-event-mesh-backend/README.md).
+the [installation documentation](https://knative.dev/docs/install/installing-backstage-plugins/) on Knative docs.
 
 ```bash
 {
@@ -196,8 +196,8 @@ yarn dev
 
 By default, Backstage App can be accessed at `http://localhost:3000`.
 
-If Backstage App is running as a Kubernetes deployment, it could be accessed over ingress by doing changes specified 
-[here](./backstage/README.md#ingress-configuration).
+To run the Backstage instance on Kubernetes, see
+the [Backstage documentation](https://backstage.io/docs/deployment/k8s/).
 
 #### Testing GitHub Actions
 

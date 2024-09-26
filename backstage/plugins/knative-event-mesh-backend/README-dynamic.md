@@ -8,7 +8,7 @@ API server.
 A demo setup for this plugin is available at https://github.com/aliok/knative-backstage-demo.
 
 For more information about the plugin, please see
-the [GitHub repository](https://github.com/knative-extensions/backstage-plugins/blob/main/backstage/plugins/knative-event-mesh-backend/README.md).
+the [documentation](https://knative.dev/docs/eventing/event-registry/eventmesh-backstage-plugin/) on Knative docs.
 
 This distribution of the plugin is a dynamic plugin that can be installed in a Backstage instance that supports dynamic
 plugins.
@@ -29,10 +29,11 @@ The benefit of the dynamic plugin is it can be used without changing the source 
 
 Install Knative Eventing by following the [official documentation](https://knative.dev/docs/install/).
 
-Install the backend and the relevant configuration in the Kubernetes cluster
+Install the backend and the relevant configuration in the Kubernetes cluster:
 
 ```bash
-kubectl apply -f https://github.com/knative-extensions/backstage-plugins/releases/download/v0.1.0/eventmesh.yaml
+VERSION="latest" # or a specific version like knative-v1.15.0
+kubectl apply -f https://github.com/knative-extensions/backstage-plugins/releases/${VERSION}/download/eventmesh.yaml
 ```
 
 ## Janus Configuration
@@ -45,8 +46,6 @@ For a quick test, download the plugin package and extract it to the `dynamic-plu
 ```bash
 cd <path-to-Janus-IDP>/dynamic-plugins-root
 pkg=@knative-extensions/plugin-knative-event-mesh-backend-dynamic
-pkg=@knative-extensions/plugin-knative-event-mesh-backend-dynamic
-pkg=@aliok/plugin-knative-event-mesh-backend-dynamic
 archive=$(npm pack $pkg)
 tar -xzf "$archive" && rm "$archive"
 mv package $(echo $archive | sed -e 's:\.tgz$::')
@@ -72,9 +71,8 @@ catalog:
           timeout: { minutes: 1 }
 ```
 
-Please see
-the [README](https://github.com/knative-extensions/backstage-plugins/blob/main/backstage/plugins/knative-event-mesh-backend/README.md#configuration)
-for the static plugin for more information about the configuration requirements.
+Please see the plugin [installation](https://knative.dev/docs/install/installing-backstage-plugins/) documentation on
+Knative website for more information about the configuration requirements such as the `token` and the `baseUrl`.
 
 Start your Janus IDP instance!
 
