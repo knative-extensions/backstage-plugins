@@ -127,19 +127,17 @@ jobs:
 
       - name: Post status to Slack
         # Note: using env.SLACK_WEBHOOK here because secrets are not allowed in the if block.
-        if: env.SLACK_WEBHOOK != ''
-        uses: rtCamp/action-slack-notify@v2.3.0
+        if: ${{ env.SLACK_WEBHOOK != '' && failure()}}
+        uses: rtCamp/action-slack-notify@v2.1.0
         env:
-          SLACK_CHANNEL: knative-release
-          SLACK_USERNAME: knative/release
           SLACK_ICON: http://github.com/knative.png?size=48
+          SLACK_USERNAME: knative/release
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: knative-release
           MSG_MINIMAL: 'true'
-          SLACK_FOOTER: View GitHub Run - https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
+          SLACK_TITLE: '${{ github.repository }} release failed'
           SLACK_MESSAGE: |
-            ${{ env.CHECK_MESSAGE }}
-            ${{ env.VERIFY_MESSAGE }}
+            View GitHub Run - https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Fail if NO-GO
         if: env.current == 'false'
