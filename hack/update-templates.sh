@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#set -o errexit
-#set -o nounset
-#set -o pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
 
 ROOT_DIR=$(dirname "$0")/..
 TEMPLATES_DIR=${ROOT_DIR}/backstage/templates
@@ -24,14 +24,14 @@ SKELETONS_DIR=${TEMPLATES_DIR}/skeletons
 
 # get the list of templates (skip the first line, which is the header)
 TEMPLATES_LINES=$(func templates | tail -n +2)
-IFS=$'\n' read -d '' -r -a TEMPLATE_TUPLES <<< "$TEMPLATES_LINES"
+IFS=$'\n' read -d '' -r -a TEMPLATE_TUPLES <<< "$TEMPLATES_LINES" || true
 for tuple in "${TEMPLATE_TUPLES[@]}"
 do
   IFS=' ' read -r -a tuple <<< "$tuple"
   LANG=${tuple[0]}
   TEMPLATE=${tuple[1]}
   NAME="$LANG-$TEMPLATE"
-  rm -rf "${SKELETONS_DIR}/${NAME}"
+  rm -rf "${SKELETONS_DIR}/${NAME}" || true
   echo "Creating function for language: $LANG, template: $TEMPLATE"
   func create -l $LANG -t $TEMPLATE "${SKELETONS_DIR}/${NAME}"
 
