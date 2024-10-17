@@ -18,7 +18,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-readonly REPO_ROOT_DIR=$(dirname "$0")/..
+source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
+
 readonly TMP_DIFFROOT="$(mktemp -d ${REPO_ROOT_DIR}/tmpdiffroot.XXXXXX)"
 
 cleanup() {

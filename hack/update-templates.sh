@@ -18,8 +18,44 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-ROOT_DIR=$(dirname "$0")/..
-TEMPLATES_DIR=${ROOT_DIR}/backstage/templates
+source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
+
+readonly FUNC_BINARY_DIR="$(mktemp -d ${REPO_ROOT_DIR}/tmpfuncdir.XXXXXX)"
+
+cleanup() {
+  rm -rf "${FUNC_BINARY_DIR}"
+}
+
+trap "cleanup" EXIT SIGINT
+
+function resolveFuncBinaryName() {
+  ARCH=$(uname -m)
+  BINARY=0
+
+  case "${OSTYPE}" in
+    darwin*) BINARY="func_darwin_${ARCH}" ;;
+    linux*) BINARY="func_linux_${ARCH}" ;;
+    *) echo "** Internal error in library.sh, unknown OS '${OSTYPE}'" ; exit 1 ;;
+  esac
+
+  echo "${BINARY}"
+}
+
+function resolveFuncBinaryUrl() {
+  # e.g.
+  # https://github.com/knative/func/releases/download/knative-v1.15.0/func_linux_amd64
+  VERSION=$(cat "${REPO_ROOT_DIR}/hack/func-version.txt")
+  echo "https://github.com/knative/func/releases/download/${VERSION}/$(resolveFuncBinaryName)"
+}
+
+# download the binary into the temporary directory
+echo "Downloading func binary from $(resolveFuncBinaryUrl)"
+curl -sL "$(resolveFuncBinaryUrl)" -o "${FUNC_BINARY_DIR}/func"
+chmod +x "${FUNC_BINARY_DIR}/func"
+# add the func binary to the PATH
+export PATH="${FUNC_BINARY_DIR}:${PATH}"
+
+TEMPLATES_DIR=${REPO_ROOT_DIR}/backstage/templates
 SKELETONS_DIR=${TEMPLATES_DIR}/skeletons
 
 # get the list of templates (skip the first line, which is the header)
@@ -54,13 +90,13 @@ do
   echo "Generating template yaml file for language: $LANG, template: $TEMPLATE at $OUTFILE"
   export LANG
   export TEMPLATE
-  cat "${ROOT_DIR}/hack/backstage-template-template.yaml" | envsubst > $OUTFILE
+  cat "${REPO_ROOT_DIR}/hack/backstage-template-template.yaml" | envsubst > $OUTFILE
 done
 
 # generate location.yaml file
 OUTFILE="${TEMPLATES_DIR}/location.yaml"
 rm $OUTFILE || true
-cp "${ROOT_DIR}/hack/backstage-location-template.yaml" $OUTFILE
+cp "${REPO_ROOT_DIR}/hack/backstage-location-template.yaml" $OUTFILE
 for tuple in "${TEMPLATE_TUPLES[@]}"
 do
   IFS=' ' read -r -a tuple <<< "$tuple"
@@ -71,3 +107,5 @@ do
 done
 
 echo "Done"
+
+# TODO: use less loops
