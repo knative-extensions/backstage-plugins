@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: knative-func-go-cloudevents
+  name: TEST
   title: Create a go cloudevents Knative Function application with a CI pipeline
   description: Create a go cloudevents Knative Function application with a CI pipeline
   tags:
