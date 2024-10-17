@@ -54,3 +54,8 @@ catalog:
           frequency: { minutes: 1 }
           # supports ISO duration, "human duration" as used in code
           timeout: { minutes: 1 }
+  locations:
+    - type: file
+      target: ../../templates/location.yaml
+      rules:
+        - allow: [ Location, Template ]
