@@ -58,7 +58,7 @@ export PATH="${FUNC_BINARY_DIR}:${PATH}"
 TEMPLATES_DIR=${REPO_ROOT_DIR}/backstage/templates
 SKELETONS_DIR=${TEMPLATES_DIR}/skeletons
 
-# get the list of templates (skip the first line, which is the header)
+# iterate over the list of lang+template entries (skip the first line, which is the header)
 TEMPLATES_LINES=$(func templates | tail -n +2)
 IFS=$'\n' read -d '' -r -a TEMPLATE_TUPLES <<< "$TEMPLATES_LINES" || true
 for tuple in "${TEMPLATE_TUPLES[@]}"
@@ -67,7 +67,11 @@ do
   LANG=${tuple[0]}
   TEMPLATE=${tuple[1]}
   NAME="$LANG-$TEMPLATE"
+
+  # remove existing skeleton
   rm -rf "${SKELETONS_DIR}/${NAME}" || true
+
+  # create skeleton
   echo "Creating function for language: $LANG, template: $TEMPLATE"
   func create -l $LANG -t $TEMPLATE "${SKELETONS_DIR}/${NAME}"
 
@@ -76,36 +80,25 @@ do
 
   # replace the line in func.yaml that starts with "created" with "created: 2024-01-01T00:00:00.000000+00:00"
   sed -i "s/^created: .*/created: 2024-01-01T00:00:00.000000+00:00/" "${SKELETONS_DIR}/${NAME}/func.yaml"
-done
 
-# generate template yaml files
-for tuple in "${TEMPLATE_TUPLES[@]}"
-do
-  IFS=' ' read -r -a tuple <<< "$tuple"
-  LANG=${tuple[0]}
-  TEMPLATE=${tuple[1]}
-  NAME="$LANG-$TEMPLATE"
-  OUTFILE="${TEMPLATES_DIR}/${NAME}.yaml"
-  rm $OUTFILE || true
-  echo "Generating template yaml file for language: $LANG, template: $TEMPLATE at $OUTFILE"
-  export LANG
-  export TEMPLATE
-  cat "${REPO_ROOT_DIR}/hack/backstage-template-template.yaml" | envsubst > $OUTFILE
+  # remove and recreate the template yaml file
+  TEMPLATE_FILE="${TEMPLATES_DIR}/${NAME}.yaml"
+  rm $TEMPLATE_FILE || true
+  echo "Generating template yaml file for language: $LANG, template: $TEMPLATE at $TEMPLATE_FILE"
+  cat "${REPO_ROOT_DIR}/hack/backstage-template-template.yaml" | LANG=$LANG TEMPLATE=$TEMPLATE envsubst > $TEMPLATE_FILE
 done
 
 # generate location.yaml file
-OUTFILE="${TEMPLATES_DIR}/location.yaml"
-rm $OUTFILE || true
-cp "${REPO_ROOT_DIR}/hack/backstage-location-template.yaml" $OUTFILE
+LOCATION_FILE="${TEMPLATES_DIR}/location.yaml"
+rm $LOCATION_FILE || true
+cp "${REPO_ROOT_DIR}/hack/backstage-location-template.yaml" $LOCATION_FILE
 for tuple in "${TEMPLATE_TUPLES[@]}"
 do
   IFS=' ' read -r -a tuple <<< "$tuple"
   LANG=${tuple[0]}
   TEMPLATE=${tuple[1]}
   NAME="$LANG-$TEMPLATE"
-  echo "  - ./${NAME}.yaml" >> $OUTFILE
+  echo "  - ./${NAME}.yaml" >> $LOCATION_FILE
 done
 
 echo "Done"
-
-# TODO: use less loops
