@@ -1,0 +1,23 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: knative-function-templates
+  description: Location that contains the Knative Function templates
+spec:
+  targets:
+    - ./go-cloudevents.yaml
+    - ./go-http.yaml
+    - ./node-cloudevents.yaml
+    - ./node-http.yaml
+    - ./python-cloudevents.yaml
+    - ./python-flask.yaml
+    - ./python-http.yaml
+    - ./python-wsgi.yaml
+    - ./quarkus-cloudevents.yaml
+    - ./quarkus-http.yaml
+    - ./rust-cloudevents.yaml
+    - ./rust-http.yaml
+    - ./springboot-cloudevents.yaml
+    - ./springboot-http.yaml
+    - ./typescript-cloudevents.yaml
+    - ./typescript-http.yaml
