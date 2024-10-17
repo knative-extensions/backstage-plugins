@@ -29,12 +29,20 @@ cleanup() {
 trap "cleanup" EXIT SIGINT
 
 function resolveFuncBinaryName() {
-  ARCH=$(uname -m)
-  BINARY=0
+  ARCH=""
+  case $(uname -m) in
+      i386)   ARCH="386" ;;
+      i686)   ARCH="386" ;;
+      x86_64) ARCH="amd64" ;;
+      arm)    ARCH="amd64" ;;
+      arm64)  ARCH="amd64" ;;
+      *) echo "** Unknown architecture '$(uname -m)'" ; exit 1 ;;
+  esac
 
+  BINARY=""
   case "${OSTYPE}" in
     darwin*) BINARY="func_darwin_${ARCH}" ;;
-    linux*) BINARY="func_linux_${ARCH}" ;;
+    linux*)  BINARY="func_linux_${ARCH}" ;;
     *) echo "** Internal error in library.sh, unknown OS '${OSTYPE}'" ; exit 1 ;;
   esac
 
