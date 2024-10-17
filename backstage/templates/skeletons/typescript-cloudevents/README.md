@@ -18,9 +18,9 @@ npm run local
 
 The runtime will expose three endpoints.
 
-* `/` The endpoint for your function.
-* `/health/readiness` The endpoint for a readiness health check
-* `/health/liveness` The endpoint for a liveness health check
+  * `/` The endpoint for your function.
+  * `/health/readiness` The endpoint for a readiness health check
+  * `/health/liveness` The endpoint for a liveness health check
 
 The health checks can be accessed in your browser at
 [http://localhost:8080/health/readiness]() and
@@ -79,8 +79,7 @@ export interface Function {
 
 ## Handle Signature
 
-CloudEvent functions are used in environments where the incoming HTTP request is a CloudEvent. The function signature
-is:
+CloudEvent functions are used in environments where the incoming HTTP request is a CloudEvent. The function signature is:
 
 ```typescript
 interface CloudEventFunction {
@@ -95,8 +94,7 @@ type CloudEventFunctionReturn = Promise<CloudEvent> | CloudEvent | HTTPFunctionR
 type HTTPFunctionReturn = Promise<StructuredReturn> | StructuredReturn | ResponseBody | void;
 ```
 
-The function return type can be anything that a simple HTTP function can return or a CloudEvent. Whatever is returned,
-it will be sent back to the caller as a response.
+The function return type can be anything that a simple HTTP function can return or a CloudEvent. Whatever is returned, it will be sent back to the caller as a response.
 
 Where the `StructuredReturn` is a JavaScript object with the following properties:
 
@@ -108,19 +106,13 @@ interface StructuredReturn {
 }
 ```
 
-If the function returns a `StructuredReturn` object, then the `statusCode` and `headers` properties are used to
-construct the HTTP response. If the `body` property is present, it is used as the response body. If the function
-returns `void` or `undefined`, then the response body is empty.
+If the function returns a `StructuredReturn` object, then the `statusCode` and `headers` properties are used to construct the HTTP response. If the `body` property is present, it is used as the response body. If the function returns `void` or `undefined`, then the response body is empty.
 
-The `ResponseBody` is either a string, a JavaScript object, or a Buffer. JavaScript objects will be serialized as JSON.
-Buffers will be sent as binary data.
+The `ResponseBody` is either a string, a JavaScript object, or a Buffer. JavaScript objects will be serialized as JSON. Buffers will be sent as binary data.
 
 ### Health Checks
 
-The `Function` interface also allows for the addition of a `liveness` and `readiness` function. These functions are used
-to implement health checks for the function. The `liveness` function is called to check if the function is alive.
-The `readiness` function is called to check if the function is ready to accept requests. If either of these functions
-returns a non-200 status code, then the function is considered unhealthy.
+The `Function` interface also allows for the addition of a `liveness` and `readiness` function. These functions are used to implement health checks for the function. The `liveness` function is called to check if the function is alive. The `readiness` function is called to check if the function is ready to accept requests. If either of these functions returns a non-200 status code, then the function is considered unhealthy.
 
 A health check function is defined as:
 
@@ -135,14 +127,12 @@ export interface HealthCheck {
 }
 ```
 
-By default, the health checks are bound to the `/health/liveness` and `/health/readiness` paths. You can override this
-by setting the `path` property on the `HealthCheck` object, or by setting the `LIVENESS_URL` and `READINESS_URL`
-environment variables.
+By default, the health checks are bound to the `/health/liveness` and `/health/readiness` paths. You can override this by setting the `path` property on the `HealthCheck` object, or by setting the `LIVENESS_URL` and `READINESS_URL` environment variables.
 
 ## Testing
 
 This function project includes a [unit test](./test/unit.ts) and an
-[integration test](./test/integration.ts). Modify these, or add additional tests for your business logic.
+[integration test](./test/integration.ts).  Modify these, or add additional tests for your business logic.
 
 ```console
 npm test

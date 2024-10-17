@@ -2,8 +2,7 @@
 
 Welcome to your new Function project!
 
-This sample project contains a single function based on Spring Cloud
-Function: `functions.CloudFunctionApplication.echo()`, which returns an echo of the data passed via HTTP request.
+This sample project contains a single function based on Spring Cloud Function: `functions.CloudFunctionApplication.echo()`, which returns an echo of the data passed via HTTP request.
 
 ## Local execution
 
@@ -44,10 +43,7 @@ buildEnvs:
     value: "true"
 ```
 
-**Note**: If you have issues with
-the [Spring AOT](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#core.aot) processing in
-your build, you can turn this off by editing the `func.yaml` file and removing the `BP_MAVEN_ACTIVE_PROFILES` buildEnvs
-entry.
+**Note**: If you have issues with the [Spring AOT](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#core.aot) processing in your build, you can turn this off by editing the `func.yaml` file and removing the `BP_MAVEN_ACTIVE_PROFILES` buildEnvs entry.
 
 > Removing the `native` profile means that you no longer will be able to build as a native image.
 
@@ -70,15 +66,11 @@ func deploy -v # also triggers build
 
 ### For ARM processor based systems
 
-Building Spring Boot apps with Paketo Buildpacks on an ARM processor based system, like an Apple Macbook with an M1 or
-M2 chip, is not fully supported at the moment.
-There is work in progress to fix this, you can follow
-the [Support ARM #435](https://github.com/buildpacks/lifecycle/issues/435) issue.
-You can also join the `#arm` channel in the paketo slack (join at: https://slack.paketo.io/) to follow progress on this
-topic
+Building Spring Boot apps with Paketo Buildpacks on an ARM processor based system, like an Apple Macbook with an M1 or M2 chip, is not fully supported at the moment.
+There is work in progress to fix this, you can follow the [Support ARM #435](https://github.com/buildpacks/lifecycle/issues/435) issue.
+You can also join the `#arm` channel in the paketo slack (join at: https://slack.paketo.io/) to follow progress on this topic
 
-To work around the multiarch limitation you can build the image on your local system using a community
-contributed [multiarch builder](https://github.com/dashaun/paketo-arm64) that produces images for the `arm64` arch.
+To work around the multiarch limitation you can build the image on your local system using a community contributed [multiarch builder](https://github.com/dashaun/paketo-arm64) that produces images for the `arm64` arch.
 
 You need to provide the `--builder-image` argument using `dashaun/builder:tiny` as the builder.
 

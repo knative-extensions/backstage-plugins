@@ -4,5 +4,5 @@ runtime: python
 created: 2024-01-01T00:00:00.000000+00:00
 run:
   envs:
-    - name: APP_MODULE
-      value: func:main
+  - name: APP_MODULE
+    value: func:main

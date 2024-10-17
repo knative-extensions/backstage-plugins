@@ -5,12 +5,12 @@ created: 2024-01-01T00:00:00.000000+00:00
 invoke: cloudevent
 build:
   buildEnvs:
-    - name: BP_NATIVE_IMAGE
-      value: "false"
-    - name: BP_JVM_VERSION
-      value: "21"
-    - name: BP_MAVEN_ACTIVE_PROFILES
-      value: native
+  - name: BP_NATIVE_IMAGE
+    value: "false"
+  - name: BP_JVM_VERSION
+    value: "21"
+  - name: BP_MAVEN_ACTIVE_PROFILES
+    value: native
 deploy:
   healthEndpoints:
     liveness: /actuator/health

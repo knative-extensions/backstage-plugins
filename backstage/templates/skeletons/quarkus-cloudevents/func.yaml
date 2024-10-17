@@ -5,11 +5,11 @@ created: 2024-01-01T00:00:00.000000+00:00
 invoke: cloudevent
 build:
   buildEnvs:
-    - name: BP_NATIVE_IMAGE
-      value: "false"
-    - name: BP_JVM_VERSION
-      value: "21"
-    - name: MAVEN_S2I_ARTIFACT_DIRS
-      value: target/quarkus-app
-    - name: S2I_SOURCE_DEPLOYMENTS_FILTER
-      value: lib quarkus-run.jar app quarkus
+  - name: BP_NATIVE_IMAGE
+    value: "false"
+  - name: BP_JVM_VERSION
+    value: "21"
+  - name: MAVEN_S2I_ARTIFACT_DIRS
+    value: target/quarkus-app
+  - name: S2I_SOURCE_DEPLOYMENTS_FILTER
+    value: lib quarkus-run.jar app quarkus

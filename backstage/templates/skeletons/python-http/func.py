@@ -13,7 +13,7 @@ def payload_print(req: Request) -> str:
             ret = "{"
 
             for key in req.form.keys():
-                ret += '"' + key + '": "' + req.form[key] + '", '
+                ret += '"' + key + '": "'+ req.form[key] + '", '
 
             return ret[:-2] + "}\n" if len(ret) > 2 else "{}"
 
@@ -43,7 +43,7 @@ def pretty_print(req: Request) -> str:
 
     return ret
 
-
+ 
 def main(context: Context):
     """ 
     Function template

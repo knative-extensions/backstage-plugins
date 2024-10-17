@@ -5,5 +5,5 @@ created: 2024-01-01T00:00:00.000000+00:00
 invoke: cloudevent
 build:
   buildEnvs:
-    - name: BP_RUSTUP_ENABLED
-      value: "false"
+  - name: BP_RUSTUP_ENABLED
+    value: "false"

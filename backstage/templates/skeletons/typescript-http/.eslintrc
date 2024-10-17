@@ -3,28 +3,17 @@
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint",
-    "prettier"
-  ],
+    "prettier"  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier"
-  ],
+    "prettier"  ],
   "rules": {
     "no-console": 1,
     "prettier/prettier": [
-      "error",
-      {
-        "endOfLine": "auto"
-      }
+      "error", { "endOfLine": "auto" }
     ],
-    "quotes": [
-      "error",
-      "single",
-      {
-        "allowTemplateLiterals": true
-      }
-    ]
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }]
   }
 }

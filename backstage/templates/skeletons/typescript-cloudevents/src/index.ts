@@ -1,5 +1,5 @@
-import {CloudEvent} from 'cloudevents';
-import {Context} from 'faas-js-runtime';
+import { CloudEvent } from 'cloudevents';
+import { Context } from 'faas-js-runtime';
 
 /**
  * Your CloudEvents function, invoked with each request. This
@@ -20,7 +20,7 @@ import {Context} from 'faas-js-runtime';
  * @param {CloudEvent} cloudevent the CloudEvent
  */
 // eslint-disable-next-line prettier/prettier
-const handle = async (context:Context, cloudevent?:CloudEvent<Customer>):Promise<CloudEvent<Customer | string>> => {
+const handle = async (context: Context, cloudevent?: CloudEvent<Customer>): Promise<CloudEvent<Customer|string>> => {
   // YOUR CODE HERE
   const meta = {
     source: 'function.eventViewer',
@@ -28,9 +28,9 @@ const handle = async (context:Context, cloudevent?:CloudEvent<Customer>):Promise
   };
   // The incoming CloudEvent
   if (!cloudevent) {
-    const response:CloudEvent<string> = new CloudEvent<string>({
+    const response: CloudEvent<string> = new CloudEvent<string>({
       ...meta,
-      ...{type: 'error', data: 'No event received'}
+      ...{ type: 'error', data: 'No event received' }
     });
     context.log.info(response.toString());
     return response;
@@ -45,12 +45,12 @@ ${JSON.stringify(cloudevent.data)}
 -----------------------------------------------------------
 `);
   // respond with a new CloudEvent
-  return new CloudEvent<Customer>({...meta, data: cloudevent.data});
+  return new CloudEvent<Customer>({ ...meta, data: cloudevent.data });
 };
 
 export interface Customer {
-  name:string;
-  customerId:string;
+  name: string;
+  customerId: string;
 }
 
-export {handle};
+export { handle };

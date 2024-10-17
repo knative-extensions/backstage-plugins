@@ -1,7 +1,6 @@
 # TypeScript HTTP Function
 
-Welcome to your new TypeScript function project! The boilerplate function code can be found in [`index.ts`](./index.ts).
-This function will respond to incoming HTTP GET and POST requests.
+Welcome to your new TypeScript function project! The boilerplate function code can be found in [`index.ts`](./index.ts). This function will respond to incoming HTTP GET and POST requests.
 
 ## Local execution
 
@@ -15,9 +14,9 @@ npm run local
 
 The runtime will expose three endpoints.
 
-* `/` The endpoint for your function.
-* `/health/readiness` The endpoint for a readiness health check
-* `/health/liveness` The endpoint for a liveness health check
+  * `/` The endpoint for your function.
+  * `/health/readiness` The endpoint for a readiness health check
+  * `/health/liveness` The endpoint for a liveness health check
 
 The parameter provided to the function endpoint at invocation is a `Context` object containing HTTP request information.
 
@@ -32,8 +31,7 @@ function handleRequest(context) {
 }
 ```
 
-The health checks can be accessed in your browser at [http://localhost:8080/health/readiness]()
-and [http://localhost:8080/health/liveness](). You can use `curl` to `POST` an event to the function endpoint:
+The health checks can be accessed in your browser at [http://localhost:8080/health/readiness]() and [http://localhost:8080/health/liveness](). You can use `curl` to `POST` an event to the function endpoint:
 
 ```console
 curl -X POST -d '{"hello": "world"}' \
@@ -41,9 +39,7 @@ curl -X POST -d '{"hello": "world"}' \
   http://localhost:8080
 ```
 
-The readiness and liveness endpoints use [overload-protection](https://www.npmjs.com/package/overload-protection) and
-will respond with `HTTP 503 Service Unavailable` with a `Client-Retry` header if your function is determined to be
-overloaded, based on the memory usage and event loop delay.
+The readiness and liveness endpoints use [overload-protection](https://www.npmjs.com/package/overload-protection) and will respond with `HTTP 503 Service Unavailable` with a `Client-Retry` header if your function is determined to be overloaded, based on the memory usage and event loop delay.
 
 ## The Function Interface
 
@@ -89,8 +85,7 @@ interface HTTPFunction {
 }
 ```
 
-Where the `IncomingBody` is either a string, a Buffer, a JavaScript object, or undefined, depending on what was supplied
-in the HTTP POST message body. The `HTTTPFunctionReturn` type is defined as:
+Where the `IncomingBody` is either a string, a Buffer, a JavaScript object, or undefined, depending on what was supplied in the HTTP POST message body. The `HTTTPFunctionReturn` type is defined as:
 
 ```typescript
 type HTTPFunctionReturn = Promise<StructuredReturn> | StructuredReturn | ResponseBody | void;
@@ -106,19 +101,13 @@ interface StructuredReturn {
 }
 ```
 
-If the function returns a `StructuredReturn` object, then the `statusCode` and `headers` properties are used to
-construct the HTTP response. If the `body` property is present, it is used as the response body. If the function
-returns `void` or `undefined`, then the response body is empty.
+If the function returns a `StructuredReturn` object, then the `statusCode` and `headers` properties are used to construct the HTTP response. If the `body` property is present, it is used as the response body. If the function returns `void` or `undefined`, then the response body is empty.
 
-The `ResponseBody` is either a string, a JavaScript object, or a Buffer. JavaScript objects will be serialized as JSON.
-Buffers will be sent as binary data.
+The `ResponseBody` is either a string, a JavaScript object, or a Buffer. JavaScript objects will be serialized as JSON. Buffers will be sent as binary data.
 
 ### Health Checks
 
-The `Function` interface also allows for the addition of a `liveness` and `readiness` function. These functions are used
-to implement health checks for the function. The `liveness` function is called to check if the function is alive.
-The `readiness` function is called to check if the function is ready to accept requests. If either of these functions
-returns a non-200 status code, then the function is considered unhealthy.
+The `Function` interface also allows for the addition of a `liveness` and `readiness` function. These functions are used to implement health checks for the function. The `liveness` function is called to check if the function is alive. The `readiness` function is called to check if the function is ready to accept requests. If either of these functions returns a non-200 status code, then the function is considered unhealthy.
 
 A health check function is defined as:
 
@@ -133,14 +122,11 @@ export interface HealthCheck {
 }
 ```
 
-By default, the health checks are bound to the `/health/liveness` and `/health/readiness` paths. You can override this
-by setting the `path` property on the `HealthCheck` object, or by setting the `LIVENESS_URL` and `READINESS_URL`
-environment variables.
+By default, the health checks are bound to the `/health/liveness` and `/health/readiness` paths. You can override this by setting the `path` property on the `HealthCheck` object, or by setting the `LIVENESS_URL` and `READINESS_URL` environment variables.
 
 ## Testing
 
-This function project includes a [unit test](./test/unit.ts) and an [integration test](./test/integration.ts). Modify
-these, or add additional tests for your business logic.
+This function project includes a [unit test](./test/unit.ts) and an [integration test](./test/integration.ts). Modify these, or add additional tests for your business logic.
 
 ```console
 npm test
