@@ -37,6 +37,9 @@ do
 
   # replace the line in func.yaml that starts with "name:" with "name: $NAME"
   sed -i "s/^name: .*/name: ${NAME}/" "${SKELETONS_DIR}/${NAME}/func.yaml"
+
+  # replace the line in func.yaml that starts with "created" with "created: 2024-01-01T00:00:00.000000+00:00"
+  sed -i "s/^created: .*/created: 2024-01-01T00:00:00.000000+00:00/" "${SKELETONS_DIR}/${NAME}/func.yaml"
 done
 
 # generate template yaml files
