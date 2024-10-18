@@ -20,7 +20,7 @@ set -o pipefail
 
 source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
 
-readonly TMP_DIFFROOT="$(mktemp -d ${REPO_ROOT_DIR}/tmptemplatesdiffroot.XXXXXX)"
+readonly TMP_DIFFROOT="$(mktemp -d ${REPO_ROOT_DIR}/tmpdepsdiffroot.XXXXXX)"
 
 cleanup() {
   rm -rf "${TMP_DIFFROOT}"
@@ -29,20 +29,24 @@ cleanup() {
 trap "cleanup" EXIT SIGINT
 
 # Save working tree state
-mkdir -p "${TMP_DIFFROOT}/backstage"
-cp -aR "${REPO_ROOT_DIR}/backstage/templates" "${TMP_DIFFROOT}/backstage"
+cp -aR "${REPO_ROOT_DIR}/go.sum" "${TMP_DIFFROOT}"
 
 ret=0
 echo "Checking generated FS"
-"${REPO_ROOT_DIR}/hack/update-templates.sh"
 
+"${REPO_ROOT_DIR}/hack/update-deps.sh"
 echo "Diffing ${REPO_ROOT_DIR} against freshly generated codegen"
-diff -Nupr --no-dereference "${REPO_ROOT_DIR}/backstage/templates" "${TMP_DIFFROOT}/backstage/templates" || ret=1
+diff -Nupr --no-dereference "${REPO_ROOT_DIR}/go.sum" "${TMP_DIFFROOT}/go.sum" || ret=1
+
+# Restore working tree state
+rm -fr "${REPO_ROOT_DIR}/go.sum"
+cp -aR "${TMP_DIFFROOT}"/* "${REPO_ROOT_DIR}"
 
 if [[ $ret -eq 0 ]]
 then
-  echo "${REPO_ROOT_DIR} is up to date."
+  echo "${REPO_ROOT_DIR} up to date."
 else
-  echo "ERROR: ${REPO_ROOT_DIR} is out of date. Please run ./hack/update-templates.sh"
+  echo "ERROR: ${REPO_ROOT_DIR} is out of date. Please run ./hack/update-deps.sh"
   exit 1
 fi
+
