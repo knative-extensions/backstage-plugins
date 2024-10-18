@@ -1,0 +1,24 @@
+{
+  "name": "event-handler",
+  "version": "0.1.0",
+  "description": "Node.js CloudEvent Handler",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "test": "node test/unit.js && node test/integration.js",
+    "start": "FUNC_LOG_LEVEL=info faas-js-runtime ./index.js",
+    "debug": "nodemon --inspect ./node_modules/faas-js-runtime/bin/cli.js ./index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.1",
+    "tape": "^4.13.0"
+  },
+  "dependencies": {
+    "cloudevents": "^7.0.1",
+    "faas-js-runtime": "^2.2.2"
+  }
+}
