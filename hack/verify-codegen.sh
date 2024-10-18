@@ -18,7 +18,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-source "$(go run knative.dev/hack/cmd/script library.sh)"
+source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
 
 "${REPO_ROOT_DIR}/hack/verify-templates.sh"
 "${REPO_ROOT_DIR}/hack/verify-deps.sh"
