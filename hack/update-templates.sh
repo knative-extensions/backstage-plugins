@@ -89,6 +89,9 @@ do
   # replace the line in func.yaml that starts with "created" with "created: 2024-01-01T00:00:00.000000+00:00"
   sed -i "s/^created: .*/created: 2024-01-01T00:00:00.000000+00:00/" "${SKELETONS_DIR}/${NAME}/func.yaml"
 
+  # remove the .func directory
+  rm -rf "${SKELETONS_DIR}/${NAME}/.func" || true
+
   # remove and recreate the template yaml file
   TEMPLATE_FILE="${TEMPLATES_DIR}/${NAME}.yaml"
   rm $TEMPLATE_FILE || true
