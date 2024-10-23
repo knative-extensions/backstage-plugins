@@ -1,1 +1,1 @@
-knative-v1.14.0
+knative-v1.16.0
