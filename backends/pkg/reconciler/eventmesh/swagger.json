@@ -1,0 +1,145 @@
+{
+  "swagger": "2.0",
+  "info": {},
+  "paths": {},
+  "definitions": {
+    "Broker": {
+      "type": "object",
+      "title": "Broker is a simplified representation of a Knative Eventing Broker that is easier to consume by the Backstage plugin.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations of the broker. These are passed as is, except that are filtered out by the FilterAnnotations function.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "labels": {
+          "description": "Labels of the broker. These are passed as is.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "description": "Name of the broker",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace of the broker",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "providedEventTypes": {
+          "description": "ProvidedEventTypes is a list of event types that the broker provides.\nThis is a list of strings, where each string is a \"\u003cnamespace\u003e/\u003cname\u003e\" of the event type.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ProvidedEventTypes"
+        },
+        "uid": {
+          "description": "UID of the broker",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh"
+    },
+    "EventMesh": {
+      "description": "It's the struct that's serialized and sent to the Backstage plugin.",
+      "type": "object",
+      "title": "EventMesh is the top-level struct that holds the event mesh data.",
+      "required": [
+        "eventTypes",
+        "brokers"
+      ],
+      "properties": {
+        "brokers": {
+          "description": "Brokers is a list of all brokers in the cluster.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Broker"
+          },
+          "x-go-name": "Brokers"
+        },
+        "eventTypes": {
+          "description": "EventTypes is a list of all event types in the cluster.\nWhile we can embed the event types in the brokers, we keep them separate because\nnot every event type is tied to a broker.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EventType"
+          },
+          "x-go-name": "EventTypes"
+        }
+      },
+      "x-go-package": "knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh"
+    },
+    "EventType": {
+      "type": "object",
+      "title": "EventType is a simplified representation of a Knative Eventing EventType that is easier to consume by the Backstage plugin.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations of the event type. These are passed as is, except that are filtered out by the FilterAnnotations function.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "consumedBy": {
+          "description": "ConsumedBy is a \u003cnamespace/name\u003e list of the consumers of the event type.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ConsumedBy"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "labels": {
+          "description": "Labels of the event type. These are passed as is.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "reference": {
+          "description": "Reference is the ET's reference to a resource like a broker or a channel. It is in the format \"\u003cnamespace\u003e/\u003cname\u003e\".",
+          "type": "string",
+          "x-go-name": "Reference"
+        },
+        "schemaData": {
+          "type": "string",
+          "x-go-name": "SchemaData"
+        },
+        "schemaURL": {
+          "type": "string",
+          "x-go-name": "SchemaURL"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh"
+    }
+  }
+}
