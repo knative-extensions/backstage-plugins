@@ -26,4 +26,6 @@ import (
 
 	// eventshub is a cloudevents sender/receiver utility for e2e testing.
 	_ "knative.dev/reconciler-test/cmd/eventshub"
+
+	_ "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
 )
