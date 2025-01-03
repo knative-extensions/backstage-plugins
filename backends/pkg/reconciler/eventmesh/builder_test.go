@@ -4,28 +4,26 @@ import (
 	"context"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/types"
-
-	dynamicfake "k8s.io/client-go/dynamic/fake"
-	"knative.dev/pkg/injection/clients/dynamicclient"
-
 	"github.com/google/go-cmp/cmp"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"knative.dev/pkg/apis"
-
 	"go.uber.org/zap"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/utils/ptr"
+
+	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+	"knative.dev/pkg/injection/clients/dynamicclient"
 
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 	eventingv1beta2 "knative.dev/eventing/pkg/apis/eventing/v1beta2"
 
-	corev1 "k8s.io/api/core/v1"
+	fakeclientset "knative.dev/eventing/pkg/client/clientset/versioned/fake"
 	testingv1 "knative.dev/eventing/pkg/reconciler/testing/v1"
 	testingv1beta2 "knative.dev/eventing/pkg/reconciler/testing/v1beta2"
-
-	fakeclientset "knative.dev/eventing/pkg/client/clientset/versioned/fake"
 )
 
 func TestBuildEventMesh(t *testing.T) {
@@ -88,7 +86,7 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
@@ -97,18 +95,18 @@ func TestBuildEventMesh(t *testing.T) {
 						Annotations:        map[string]string{"test-broker-annotation": "foo"},
 						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:        "test-eventtype",
 						Namespace:   "test-ns",
 						Type:        "test-eventtype-type",
-						UID:         "test-eventtype-uid",
-						Description: "test-eventtype-description",
-						SchemaData:  "test-eventtype-schema-data",
-						SchemaURL:   "http://test-eventtype-schema",
+						Uid:         "test-eventtype-uid",
+						Description: ptr.To("test-eventtype-description"),
+						SchemaData:  ptr.To("test-eventtype-schema-data"),
+						SchemaURL:   ptr.To("http://test-eventtype-schema"),
 						Labels:      map[string]string{"test-eventtype-label": "foo"},
 						Annotations: map[string]string{"test-eventtype-annotation": "foo"},
-						Reference:   "test-ns/test-broker",
+						Reference:   ptr.To("test-ns/test-broker"),
 						ConsumedBy:  []string{"test-subscriber"},
 					},
 				},
@@ -126,18 +124,18 @@ func TestBuildEventMesh(t *testing.T) {
 				),
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
 						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{},
 					},
 				},
@@ -158,25 +156,25 @@ func TestBuildEventMesh(t *testing.T) {
 				),
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
 						ProvidedEventTypes: []string{"test-ns/test-eventtype-1"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype-1",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-1",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{},
 					},
 					{
 						Name:       "test-eventtype-2",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-2",
-						Reference:  "",
+						Reference:  nil,
 						ConsumedBy: []string{},
 					},
 				},
@@ -199,7 +197,7 @@ func TestBuildEventMesh(t *testing.T) {
 				),
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker-1",
 						Namespace:          "test-ns",
@@ -211,19 +209,19 @@ func TestBuildEventMesh(t *testing.T) {
 						ProvidedEventTypes: []string{"test-ns/test-eventtype-2"},
 					},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype-1",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker-1",
+						Reference:  ptr.To("test-ns/test-broker-1"),
 						ConsumedBy: []string{},
 					},
 					{
 						Name:       "test-eventtype-2",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker-2",
+						Reference:  ptr.To("test-ns/test-broker-2"),
 						ConsumedBy: []string{},
 					},
 				},
@@ -264,18 +262,18 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
 						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{},
 					},
 				},
@@ -308,18 +306,18 @@ func TestBuildEventMesh(t *testing.T) {
 			},
 			extraObjects: []runtime.Object{},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
 						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{},
 					},
 				},
@@ -360,18 +358,18 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:               "test-broker",
 						Namespace:          "test-ns",
 						ProvidedEventTypes: []string{"test-ns/test-eventtype"}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{},
 					},
 				},
@@ -415,7 +413,7 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:      "test-broker",
 						Namespace: "test-ns",
@@ -424,19 +422,19 @@ func TestBuildEventMesh(t *testing.T) {
 							"test-ns/test-eventtype-2",
 						}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype-1",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-1",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{"test-subscriber"},
 					},
 					{
 						Name:       "test-eventtype-2",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-2",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{"test-subscriber"},
 					},
 				},
@@ -481,7 +479,7 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 			},
 			want: EventMesh{
-				Brokers: []*Broker{
+				Brokers: []Broker{
 					{
 						Name:      "test-broker",
 						Namespace: "test-ns",
@@ -490,19 +488,19 @@ func TestBuildEventMesh(t *testing.T) {
 							"test-ns/test-eventtype-2",
 						}},
 				},
-				EventTypes: []*EventType{
+				EventTypes: []EventType{
 					{
 						Name:       "test-eventtype-1",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-1",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{"test-subscriber"},
 					},
 					{
 						Name:       "test-eventtype-2",
 						Namespace:  "test-ns",
 						Type:       "test-eventtype-type-2",
-						Reference:  "test-ns/test-broker",
+						Reference:  ptr.To("test-ns/test-broker"),
 						ConsumedBy: []string{"test-subscriber"},
 					},
 				},
@@ -516,7 +514,6 @@ func TestBuildEventMesh(t *testing.T) {
 			v1beta2objects = append(v1beta2objects, et)
 		}
 
-		//v1objects := make([]runtime.Object, 0, 10)
 		for _, b := range tt.brokers {
 			v1beta2objects = append(v1beta2objects, b)
 		}
