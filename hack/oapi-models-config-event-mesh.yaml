@@ -2,4 +2,4 @@
 package: eventmesh
 generate:
   models: true
-output: pkg/reconciler/eventmesh/api.gen.go
+output: ../backends/pkg/reconciler/eventmesh/api.gen.go
