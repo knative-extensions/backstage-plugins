@@ -2,9 +2,10 @@ package eventmesh
 
 import (
 	"context"
-	"github.com/getkin/kin-openapi/openapi3filter"
 	"log"
 	"net/http"
+
+	"github.com/getkin/kin-openapi/openapi3filter"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gorilla/mux"

@@ -3,8 +3,9 @@ package eventmesh
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"log"
+
+	"go.uber.org/zap"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"

@@ -2,6 +2,7 @@ package eventmesh
 
 import (
 	"fmt"
+
 	v1 "knative.dev/pkg/apis/duck/v1"
 )
 
