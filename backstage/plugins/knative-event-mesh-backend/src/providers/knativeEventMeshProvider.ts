@@ -169,11 +169,11 @@ export class KnativeEventMeshProvider implements EntityProvider {
             throw new Error('Not initialized');
         }
 
-        const baseUrl = this.baseUrl;
+        // remove the trailing slash if it exists
+        const baseUrl = this.baseUrl.replace(/\/$/, '');
         const token = this.token;
 
-        // if the baseUrl ends with /, remove it
-        const url = (baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl) + '/getEventMesh';
+        const url = `${baseUrl}/getEventMesh`;
 
         const eventMesh = await getEventMesh(url, token);
 
