@@ -18,7 +18,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
+source "$(go run knative.dev/hack/cmd/script library.sh)"
 
 readonly FUNC_BINARY_DIR="$(mktemp -d ${REPO_ROOT_DIR}/tmpfuncdir.XXXXXX)"
 

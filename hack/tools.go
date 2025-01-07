@@ -22,6 +22,7 @@ package tools
 import (
 	_ "knative.dev/eventing/hack"
 	_ "knative.dev/hack"
+	_ "knative.dev/hack/cmd/script" // Allow calling embedded scripts from hack
 	_ "knative.dev/pkg/hack"
 
 	// eventshub is a cloudevents sender/receiver utility for e2e testing.

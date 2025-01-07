@@ -20,7 +20,7 @@ export KO_FLAGS="${KO_FLAGS:-}"
 
 repo_root_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")/..
 
-source "${repo_root_dir}"/vendor/knative.dev/hack/e2e-tests.sh
+source "$(go run knative.dev/hack/cmd/script e2e-tests.sh)"
 source "${repo_root_dir}"/hack/control-plane.sh
 source "${repo_root_dir}"/hack/artifacts-env.sh
 
