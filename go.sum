@@ -109,8 +109,8 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
-github.com/getkin/kin-openapi v0.127.0 h1:Mghqi3Dhryf3F8vR370nN67pAERW+3a95vomb3MAREY=
-github.com/getkin/kin-openapi v0.127.0/go.mod h1:OZrfXzUfGrNbsKj+xmFBx6E5c6yH3At/tAKSc2UszXM=
+github.com/getkin/kin-openapi v0.128.0 h1:jqq3D9vC9pPq1dGcOCv7yOp1DaEe7c/T1vzcLbITSp4=
+github.com/getkin/kin-openapi v0.128.0/go.mod h1:OZrfXzUfGrNbsKj+xmFBx6E5c6yH3At/tAKSc2UszXM=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -851,8 +851,8 @@ k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 h1:1Wof1cGQgA5pqgo8MxKPtf
 k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8/go.mod h1:Os6V6dZwLNii3vxFpxcNaTmH8LJJBkOTg1N0tOA0fvA=
 k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 h1:pUdcCO1Lk/tbT5ztQWOBi5HBgbBP1J8+AsQnQCKsi8A=
 k8s.io/utils v0.0.0-20240711033017-18e509b52bc8/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
-knative.dev/eventing v0.43.3 h1:xt10rMoe6t1hFPPrnsR5NYe/vWRXQqLgRK8lS6n5mU8=
-knative.dev/eventing v0.43.3/go.mod h1:pdrF+bEUfRkNn9ifWXS7DoVj5W31gA5KQVd8iwplXUo=
+knative.dev/eventing v0.43.0 h1:GELHZ0yYosMeV78l4alMsd7HJciEu6a3T2C5l7MPi3Y=
+knative.dev/eventing v0.43.0/go.mod h1:pdrF+bEUfRkNn9ifWXS7DoVj5W31gA5KQVd8iwplXUo=
 knative.dev/hack v0.0.0-20241010131451-05b2fb30cb4d h1:aCfX7kwkvgGxXXGbso5tLqdwQmzBkJ9d+EIRwksKTvk=
 knative.dev/hack v0.0.0-20241010131451-05b2fb30cb4d/go.mod h1:R0ritgYtjLDO9527h5vb5X6gfvt5LCrJ55BNbVDsWiY=
 knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad h1:Nrjtr2H168rJeamH4QdyLMV1lEKHejNhaj1ymgQMfLk=
