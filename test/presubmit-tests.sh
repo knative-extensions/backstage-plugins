@@ -24,7 +24,7 @@
 export GO111MODULE=on
 export DISABLE_MD_LINTING=1
 
-source $(dirname "$0")/../vendor/knative.dev/hack/presubmit-tests.sh
+source "$(go run knative.dev/hack/cmd/script presubmit-tests.sh)"
 
 function unit_tests() {
   header "Running Go unit tests"
