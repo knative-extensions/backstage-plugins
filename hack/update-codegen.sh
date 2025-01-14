@@ -19,4 +19,5 @@ set -o nounset
 set -o pipefail
 
 $(dirname "$0")/update-templates.sh "$@"
+$(dirname "$0")/update-go-codegen.sh "$@"
 $(dirname "$0")/update-deps.sh "$@"

@@ -43,6 +43,6 @@ if [[ $ret -eq 0 ]]
 then
   echo "${REPO_ROOT_DIR} is up to date."
 else
-  echo "ERROR: ${REPO_ROOT_DIR} is out of date. Please run ./hack/update-templates.sh"
+  echo "ERROR: ${REPO_ROOT_DIR} is out of date. Please run ./hack/update-go-codegen.sh"
   exit 1
 fi
