@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh/auth"
+	"knative.dev/backstage-plugins/backends/pkg/eventmesh/auth"
 
 	"go.uber.org/zap"
 

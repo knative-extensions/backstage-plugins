@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 
-	"knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh/auth"
-	eventmeshv1 "knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh/v1"
+	"knative.dev/backstage-plugins/backends/pkg/eventmesh/auth"
+	eventmeshv1 "knative.dev/backstage-plugins/backends/pkg/eventmesh/v1"
 
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/injection"
