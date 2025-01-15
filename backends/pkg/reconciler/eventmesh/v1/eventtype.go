@@ -1,18 +1,20 @@
-package eventmesh
+package v1
 
 import (
 	"knative.dev/eventing/pkg/apis/eventing/v1beta2"
 	"knative.dev/eventing/pkg/apis/eventing/v1beta3"
+
+	"knative.dev/backstage-plugins/backends/pkg/util"
 )
 
 // NamespacedName returns the name and namespace of the event type in the format "<namespace>/<name>"
 func (et EventType) NamespacedName() string {
-	return NamespacedName(et.Namespace, et.Name)
+	return util.NamespacedName(et.Namespace, et.Name)
 }
 
 // NamespacedType returns the type and namespace of the event type in the format "<namespace>/<type>"
 func (et EventType) NamespacedType() string {
-	return NamespacedName(et.Namespace, et.Type)
+	return util.NamespacedName(et.Namespace, et.Type)
 }
 
 // TODO: remove
@@ -24,12 +26,12 @@ func convertEventType(et *v1beta2.EventType) EventType {
 		Namespace:   et.Namespace,
 		Type:        et.Spec.Type,
 		Uid:         string(et.UID),
-		Description: ToStrPtrOrNil(et.Spec.Description),
-		SchemaData:  ToStrPtrOrNil(et.Spec.SchemaData),
-		SchemaURL:   ToStrPtrOrNil(et.Spec.Schema.String()),
+		Description: util.ToStrPtrOrNil(et.Spec.Description),
+		SchemaData:  util.ToStrPtrOrNil(et.Spec.SchemaData),
+		SchemaURL:   util.ToStrPtrOrNil(et.Spec.Schema.String()),
 		Labels:      et.Labels,
-		Annotations: FilterAnnotations(et.Annotations),
-		Reference:   ToStrPtrOrNil(NamespacedRefName(et.Spec.Reference)),
+		Annotations: util.FilterAnnotations(et.Annotations),
+		Reference:   util.ToStrPtrOrNil(util.NamespacedRefName(et.Spec.Reference)),
 		// this field will be populated later on, when we have process the triggers
 		ConsumedBy: make([]string, 0),
 	}
@@ -42,10 +44,10 @@ func convertEventTypev1beta3(et *v1beta3.EventType) EventType {
 		Name:        et.Name,
 		Namespace:   et.Namespace,
 		Uid:         string(et.UID),
-		Description: ToStrPtrOrNil(et.Spec.Description),
+		Description: util.ToStrPtrOrNil(et.Spec.Description),
 		Labels:      et.Labels,
-		Annotations: FilterAnnotations(et.Annotations),
-		Reference:   ToStrPtrOrNil(NamespacedRefName(et.Spec.Reference)),
+		Annotations: util.FilterAnnotations(et.Annotations),
+		Reference:   util.ToStrPtrOrNil(util.NamespacedRefName(et.Spec.Reference)),
 		// this field will be populated later on, when we have process the triggers
 		ConsumedBy: make([]string, 0),
 	}
@@ -59,7 +61,7 @@ func convertEventTypev1beta3(et *v1beta3.EventType) EventType {
 		case "type": // TODO: any CE constant for these?
 			cet.Type = attr.Value
 		case "schemadata":
-			cet.SchemaURL = ToStrPtrOrNil(attr.Value)
+			cet.SchemaURL = util.ToStrPtrOrNil(attr.Value)
 		}
 	}
 

@@ -11,6 +11,9 @@ import (
 	"github.com/gorilla/mux"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 
+	"knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh/auth"
+	eventmeshv1 "knative.dev/backstage-plugins/backends/pkg/reconciler/eventmesh/v1"
+
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/injection"
 	"knative.dev/pkg/logging"
@@ -38,17 +41,17 @@ func startWebServer(ctx context.Context) {
 	noTokenConfig.Password = ""
 	noTokenConfig.BearerTokenFile = ""
 
-	swagger, err := GetSwagger()
+	swagger, err := eventmeshv1.GetSwagger()
 	if err != nil {
 		log.Fatalf("Error loading swagger spec: %v", err)
 	}
 
-	endpoint := NewEndpoint(noTokenConfig, logger)
-	strictHandler := NewStrictHandler(endpoint, []StrictMiddlewareFunc{})
+	endpoint := eventmeshv1.NewEndpoint(noTokenConfig, logger)
+	strictHandler := eventmeshv1.NewStrictHandler(endpoint, []eventmeshv1.StrictMiddlewareFunc{})
 	router := mux.NewRouter()
-	router.Use(AuthTokenMiddleware())
+	router.Use(auth.AuthTokenMiddleware())
 	router.Use(requestValidator(swagger))
-	handlerWithMiddleware := HandlerFromMux(strictHandler, router)
+	handlerWithMiddleware := eventmeshv1.HandlerFromMux(strictHandler, router)
 
 	r := kncloudevents.NewHTTPEventReceiver(8080)
 	log.Fatal(r.StartListen(ctx, handlerWithMiddleware))

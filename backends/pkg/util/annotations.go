@@ -1,4 +1,4 @@
-package eventmesh
+package util
 
 var ExcludedAnnotations = map[string]struct{}{
 	"kubectl.kubernetes.io/last-applied-configuration": {},

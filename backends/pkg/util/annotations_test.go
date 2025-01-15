@@ -1,4 +1,4 @@
-package eventmesh
+package util
 
 import (
 	"reflect"
