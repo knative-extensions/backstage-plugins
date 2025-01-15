@@ -49,14 +49,14 @@ func VerifyBackstageBackendAuthentication() *feature.Feature {
 		token := string(secret.Data["token"])
 
 		eventshub.Install(authenticatedClientName,
-			eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080/getEventMesh"),
+			eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080/v1/getEventMesh"),
 			eventshub.InputHeader("Authorization", "Bearer "+token),
 			eventshub.InputMethod("GET"),
 		)(ctx, t)
 	})
 	f.Setup("request with unauthenticated client", eventshub.Install(
 		unauthenticatedClientName,
-		eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080/getEventMesh"),
+		eventshub.StartSenderURL("http://eventmesh-backend.knative-eventing.svc.cluster.local:8080/v1/getEventMesh"),
 		eventshub.InputHeader("Foo", "Bar"),
 		eventshub.InputMethod("GET")),
 	)

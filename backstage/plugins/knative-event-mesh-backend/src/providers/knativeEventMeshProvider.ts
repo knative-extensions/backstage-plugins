@@ -173,7 +173,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
         const baseUrl = this.baseUrl.replace(/\/$/, '');
         const token = this.token;
 
-        const url = `${baseUrl}/getEventMesh`;
+        const url = `${baseUrl}/v1/getEventMesh`;
 
         const eventMesh = await getEventMesh(url, token);
 
