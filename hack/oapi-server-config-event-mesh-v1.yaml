@@ -4,6 +4,6 @@ generate:
   gorilla-server: true
   strict-server: true
   embedded-spec: true
-output: ../backends/pkg/reconciler/eventmesh/v1/server.gen.go
+output: ../backends/pkg/eventmesh/v1/server.gen.go
 compatibility:
   apply-gorilla-middleware-first-to-last: true
