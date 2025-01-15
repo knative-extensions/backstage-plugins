@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: eventmesh
+generate:
+  gorilla-server: true
+  strict-server: true
+  embedded-spec: true
+output: ../backends/pkg/reconciler/eventmesh/server.gen.go
+compatibility:
+  apply-gorilla-middleware-first-to-last: true

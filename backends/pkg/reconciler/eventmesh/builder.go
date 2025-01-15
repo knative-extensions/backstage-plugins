@@ -3,95 +3,26 @@ package eventmesh
 import (
 	"context"
 	"fmt"
-	"log"
-	"net/http"
 	"sort"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/client-go/rest"
+	"go.uber.org/zap"
+
+	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
-	"knative.dev/pkg/logging"
 
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
-
-	"k8s.io/apimachinery/pkg/util/json"
 )
-
-// EventMesh is the top-level struct that holds the event mesh data.
-// It's the struct that's serialized and sent to the Backstage plugin.
-type EventMesh struct {
-	// EventTypes is a list of all event types in the cluster.
-	// While we can embed the event types in the brokers, we keep them separate because
-	// not every event type is tied to a broker.
-	EventTypes []*EventType `json:"eventTypes"`
-
-	// Brokers is a list of all brokers in the cluster.
-	Brokers []*Broker `json:"brokers"`
-}
 
 // BackstageKubernetesIDLabel is the label that's used to identify Backstage resources.
 // In Backstage Kubernetes plugin, a Backstage entity (e.g. a service) is tied to a Kubernetes resource
 // using this label.
 // see Backstage Kubernetes plugin for more details.
 const BackstageKubernetesIDLabel = "backstage.io/kubernetes-id"
-
-// HttpHandler is the HTTP handler that's used to serve the event mesh data.
-type HttpHandler struct {
-	ctx             context.Context
-	inClusterConfig *rest.Config
-}
-
-// This handler simply calls the event mesh builder and returns the result as JSON
-func (h HttpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	logger := logging.FromContext(h.ctx)
-
-	w.Header().Add("Content-Type", "application/json")
-
-	logger.Debugw("Handling request", "method", req.Method, "url", req.URL)
-
-	config := rest.CopyConfig(h.inClusterConfig)
-	authHeader := req.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
-		return
-	}
-	// header value is in this format: "Bearer <token>"
-	// we only need the token part
-	if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
-		http.Error(w, "Invalid Authorization header. Should start with `Bearer `", http.StatusUnauthorized)
-		return
-	}
-	config.BearerToken = authHeader[7:]
-	clientset, err := versioned.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Error creating clientset: %v", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Error creating dynamic client: %v", err)
-	}
-
-	eventMesh, err := BuildEventMesh(h.ctx, clientset, dynamicClient, logger)
-	if err != nil {
-		logger.Errorw("Error building event mesh", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(eventMesh)
-	if err != nil {
-		logger.Errorw("Error encoding event mesh", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
 
 // BuildEventMesh builds the event mesh data by fetching and converting the Kubernetes resources.
 // The procedure is as follows:
@@ -124,8 +55,8 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 
 	// register the event types in the brokers
 	for _, et := range convertedEventTypes {
-		if et.Reference != "" {
-			if br, ok := brokerMap[et.Reference]; ok {
+		if et.Reference != nil {
+			if br, ok := brokerMap[*et.Reference]; ok {
 				br.ProvidedEventTypes = append(br.ProvidedEventTypes, et.NamespacedName())
 			}
 		}
@@ -157,9 +88,18 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 		}
 	}
 
+	outputEventTypes := make([]EventType, 0, len(convertedEventTypes))
+	for _, et := range convertedEventTypes {
+		outputEventTypes = append(outputEventTypes, *et)
+	}
+	outputBrokers := make([]Broker, 0, len(convertedBrokers))
+	for _, br := range convertedBrokers {
+		outputBrokers = append(outputBrokers, *br)
+	}
+
 	eventMesh := EventMesh{
-		EventTypes: convertedEventTypes,
-		Brokers:    convertedBrokers,
+		EventTypes: outputEventTypes,
+		Brokers:    outputBrokers,
 	}
 
 	return eventMesh, nil

@@ -49,8 +49,8 @@ type EventMesh = {
     brokers:Broker[];
 };
 
-export async function getEventMesh(baseUrl: string, token: string | undefined):Promise<EventMesh> {
-    const response = await fetch(`${baseUrl}`, {
+export async function getEventMesh(url: string, token: string | undefined):Promise<EventMesh> {
+    const response = await fetch(`${url}`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -169,8 +169,11 @@ export class KnativeEventMeshProvider implements EntityProvider {
             throw new Error('Not initialized');
         }
 
-        const url = this.baseUrl;
+        // remove the trailing slash if it exists
+        const baseUrl = this.baseUrl.replace(/\/$/, '');
         const token = this.token;
+
+        const url = `${baseUrl}/getEventMesh`;
 
         const eventMesh = await getEventMesh(url, token);
 

@@ -1,0 +1,180 @@
+openapi: 3.0.1
+info:
+  title: EventMesh API
+  description: API to retrieve the EventMesh information.
+  version: 1.0.0
+paths:
+  /getEventMesh:
+    get:
+      summary: Retrieve EventMesh
+      description: Returns the EventMesh object containing brokers and event types.
+      operationId: getEventMesh
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Successfully retrieved the EventMesh object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventMesh'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+                required:
+                  - error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Broker:
+      type: object
+      description: Broker is a simplified representation of a Knative Eventing Broker that is easier to consume by the Backstage plugin.
+      properties:
+        namespace:
+          type: string
+          description: Namespace of the broker.
+          format: string
+          example: my-namespace
+        name:
+          type: string
+          description: Name of the broker.
+          format: string
+          example: my-broker
+        uid:
+          type: string
+          description: UID of the broker.
+          format: string
+          x-go-name: UID
+          example: 1234-5678-9012
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Labels of the broker.
+          example: { "key": "value" }
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Annotations of the broker.
+          example: { "key": "value" }
+        providedEventTypes:
+          type: array
+          items:
+            type: string
+            format: string
+          description: List of event types provided by the broker.
+          example: [ "my-namespace/my-event-type" ]
+      required:
+        - namespace
+        - name
+        - uid
+        - labels
+        - annotations
+        - providedEventTypes
+    EventType:
+      type: object
+      description: EventType is a simplified representation of a Knative Eventing EventType that is easier to consume by the Backstage plugin.
+      properties:
+        namespace:
+          type: string
+          description: Namespace of the event type.
+          format: string
+          example: my-namespace
+        name:
+          type: string
+          description: Name of the event type.
+          format: string
+          example: my-event-type
+        type:
+          type: string
+          description: Type of the event.
+          format: string
+          example: something-happened
+        uid:
+          type: string
+          description: UID of the event type.
+          format: string
+          example: 1234-5678-9012
+        description:
+          type: string
+          description: Description of the event type.
+          format: string
+          example: This event type is emitted when something happens.
+        schemaData:
+          type: string
+          description: Schema data.
+          deprecated: true
+          format: string
+          example: '{"type":"object","properties":{"field1":{"type":"string"}}}'
+        schemaURL:
+          type: string
+          description: URL to the schema.
+          format: url
+          example: https://my-schema.com
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Labels of the event type. These are passed as is.
+          example: { "key": "value" }
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Annotations of the event type. These are passed as is, except that are filtered out by the `FilterAnnotations` function.
+          example: { "key": "value" }
+        reference:
+          type: string
+          format: string
+          description: Reference is the EventTypes's reference to a resource like a broker or a channel. It is in the format `<namespace>/<name>`.
+          example: my-namespace/my-broker
+        consumedBy:
+          type: array
+          items:
+            type: string
+            format: string
+          description: ConsumedBy is a `<namespace/name>` list of the consumers of the event type.
+          minItems: 0
+          example: [ "my-namespace/my-consumer" ]
+      required:
+        - namespace
+        - name
+        - type
+        - uid
+        - labels
+        - annotations
+        - consumedBy
+    EventMesh:
+      type: object
+      description: EventMesh is the top-level struct that holds the event mesh data. It's the struct that's serialized and sent to the Backstage plugin.
+      properties:
+        eventTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventType'
+          description: EventTypes is a list of all event types in the cluster. While we can embed the event types in the brokers, we keep them separate because not every event type is tied to a broker.
+          minItems: 0
+        brokers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Broker'
+          description: Brokers is a list of all brokers in the cluster.
+          minItems: 0
+      required:
+        - eventTypes
+        - brokers

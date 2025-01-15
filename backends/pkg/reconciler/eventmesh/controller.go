@@ -3,6 +3,13 @@ package eventmesh
 import (
 	"context"
 	"log"
+	"net/http"
+
+	"github.com/getkin/kin-openapi/openapi3filter"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/gorilla/mux"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
 
 	"knative.dev/eventing/pkg/kncloudevents"
 	"knative.dev/pkg/injection"
@@ -31,7 +38,28 @@ func startWebServer(ctx context.Context) {
 	noTokenConfig.Password = ""
 	noTokenConfig.BearerTokenFile = ""
 
+	swagger, err := GetSwagger()
+	if err != nil {
+		log.Fatalf("Error loading swagger spec: %v", err)
+	}
+
+	endpoint := NewEndpoint(noTokenConfig, logger)
+	strictHandler := NewStrictHandler(endpoint, []StrictMiddlewareFunc{})
+	router := mux.NewRouter()
+	router.Use(AuthTokenMiddleware())
+	router.Use(requestValidator(swagger))
+	handlerWithMiddleware := HandlerFromMux(strictHandler, router)
+
 	r := kncloudevents.NewHTTPEventReceiver(8080)
-	err := r.StartListen(ctx, HttpHandler{ctx, noTokenConfig})
-	log.Fatal(err)
+	log.Fatal(r.StartListen(ctx, handlerWithMiddleware))
+}
+
+func requestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
+	return middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
+		Options: openapi3filter.Options{
+			// we use a NoopAuthenticationFunc because we want to be able to
+			// set the user in the context in the middleware
+			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
+		},
+	})
 }

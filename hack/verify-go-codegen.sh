@@ -20,6 +20,29 @@ set -o pipefail
 
 source "$(go run knative.dev/hack/cmd/script library.sh)"
 
-"${REPO_ROOT_DIR}/hack/verify-templates.sh"
-"${REPO_ROOT_DIR}/hack/verify-go-codegen.sh"
-"${REPO_ROOT_DIR}/hack/verify-deps.sh"
+readonly TMP_DIFFROOT="$(mktemp -d ${REPO_ROOT_DIR}/tmpgocodegendiffroot.XXXXXX)"
+
+cleanup() {
+  rm -rf "${TMP_DIFFROOT}"
+}
+
+trap "cleanup" EXIT SIGINT
+
+# Save working tree state
+mkdir -p "${TMP_DIFFROOT}"
+cp -aR "${REPO_ROOT_DIR}/backends" "${TMP_DIFFROOT}/"
+
+ret=0
+echo "Checking generated FS"
+"${REPO_ROOT_DIR}/hack/update-go-codegen.sh"
+
+echo "Diffing ${REPO_ROOT_DIR} against freshly generated codegen"
+diff -Nupr --no-dereference "${REPO_ROOT_DIR}/backends" "${TMP_DIFFROOT}/backends" || ret=1
+
+if [[ $ret -eq 0 ]]
+then
+  echo "${REPO_ROOT_DIR} is up to date."
+else
+  echo "ERROR: ${REPO_ROOT_DIR} is out of date. Please run ./hack/update-go-codegen.sh"
+  exit 1
+fi

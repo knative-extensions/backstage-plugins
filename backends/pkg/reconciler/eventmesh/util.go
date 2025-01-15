@@ -20,3 +20,10 @@ func NamespacedRefName(ref *v1.KReference) string {
 func NamespacedName(namespace, name string) string {
 	return fmt.Sprintf("%s/%s", namespace, name)
 }
+
+func ToStrPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
