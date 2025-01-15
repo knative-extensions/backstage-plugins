@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
-package: eventmesh
+package: v1
 generate:
   models: true
-output: ../backends/pkg/reconciler/eventmesh/api.gen.go
+output: ../backends/pkg/eventmesh/v1/api.gen.go

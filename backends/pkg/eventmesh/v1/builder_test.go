@@ -1,4 +1,4 @@
-package eventmesh
+package v1
 
 import (
 	"context"

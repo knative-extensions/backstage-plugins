@@ -1,9 +1,11 @@
-package eventmesh
+package v1
 
 import (
 	"context"
 	"fmt"
 	"log"
+
+	"knative.dev/backstage-plugins/backends/pkg/eventmesh/auth"
 
 	"go.uber.org/zap"
 
@@ -31,7 +33,7 @@ func NewEndpoint(inClusterConfig *rest.Config, logger *zap.SugaredLogger) *Endpo
 func (e Endpoint) GetEventMesh(ctx context.Context, _ GetEventMeshRequestObject) (GetEventMeshResponseObject, error) {
 	logger := e.logger
 
-	authToken, ok := GetAuthToken(ctx)
+	authToken, ok := auth.GetAuthToken(ctx)
 	if !ok {
 		return GetEventMesh401JSONResponse{
 			Error: "Authorization header is missing",

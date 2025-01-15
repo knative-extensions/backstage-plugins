@@ -1,4 +1,4 @@
-package eventmesh
+package v1
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
+
+	"knative.dev/backstage-plugins/backends/pkg/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -131,7 +133,7 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 		logger.Errorw("Trigger has no broker", "namespace", trigger.Namespace, "trigger", trigger.Name)
 		return nil
 	}
-	brokerRef := NamespacedName(trigger.Namespace, trigger.Spec.Broker)
+	brokerRef := util.NamespacedName(trigger.Namespace, trigger.Spec.Broker)
 	if _, ok := brokerMap[brokerRef]; !ok {
 		logger.Infow("Broker not found", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", trigger.Spec.Broker)
 		return nil
