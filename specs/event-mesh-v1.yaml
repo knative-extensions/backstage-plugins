@@ -84,6 +84,45 @@ components:
         - labels
         - annotations
         - providedEventTypes
+    Channel:
+        type: object
+        description: Channel is a simplified representation of a Knative Eventing Channel that is easier to consume by the Backstage plugin.
+        properties:
+          namespace:
+            type: string
+            description: Namespace of the channel.
+            format: string
+            example: my-namespace
+          name:
+            type: string
+            description: Name of the channel.
+            format: string
+            example: my-channel
+          uid:
+            type: string
+            description: UID of the channel.
+            format: string
+            example: 1234-5678-9012
+          labels:
+            type: object
+            additionalProperties:
+              type: string
+              format: string
+            description: Labels of the channel.
+            example: { "key": "value" }
+          annotations:
+            type: object
+            additionalProperties:
+                type: string
+                format: string
+            description: Annotations of the channel.
+            example: { "key": "value" }
+        required:
+          - namespace
+          - name
+          - uid
+          - labels
+          - annotations
     EventType:
       type: object
       description: EventType is a simplified representation of a Knative Eventing EventType that is easier to consume by the Backstage plugin.
@@ -175,6 +214,11 @@ components:
             $ref: '#/components/schemas/Broker'
           description: Brokers is a list of all brokers in the cluster.
           minItems: 0
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+          description:
       required:
         - eventTypes
         - brokers
