@@ -28,10 +28,29 @@ type Broker struct {
 	UID string `json:"uid"`
 }
 
+// Channel Channel is a simplified representation of a Knative Eventing Channel that is easier to consume by the Backstage plugin.
+type Channel struct {
+	// Annotations Annotations of the channel.
+	Annotations map[string]string `json:"annotations"`
+
+	// Labels Labels of the channel.
+	Labels map[string]string `json:"labels"`
+
+	// Name Name of the channel.
+	Name string `json:"name"`
+
+	// Namespace Namespace of the channel.
+	Namespace string `json:"namespace"`
+
+	// Uid UID of the channel.
+	Uid string `json:"uid"`
+}
+
 // EventMesh EventMesh is the top-level struct that holds the event mesh data. It's the struct that's serialized and sent to the Backstage plugin.
 type EventMesh struct {
 	// Brokers Brokers is a list of all brokers in the cluster.
-	Brokers []Broker `json:"brokers"`
+	Brokers  []Broker   `json:"brokers"`
+	Channels *[]Channel `json:"channels,omitempty"`
 
 	// EventTypes EventTypes is a list of all event types in the cluster. While we can embed the event types in the brokers, we keep them separate because not every event type is tied to a broker.
 	EventTypes []EventType `json:"eventTypes"`
