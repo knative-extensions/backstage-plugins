@@ -84,38 +84,39 @@ components:
         - labels
         - annotations
         - providedEventTypes
-    Channel:
+    Subscribable:
         type: object
-        description: Channel is a simplified representation of a Knative Eventing Channel that is easier to consume by the Backstage plugin.
+        description: Subscribable is a simplified representation of a Knative Eventing Subscribable that is easier to consume by the Backstage plugin. These subscribables can be channels at the moment.
         properties:
           namespace:
             type: string
-            description: Namespace of the channel.
+            description: Namespace of the subscribable.
             format: string
             example: my-namespace
           name:
             type: string
-            description: Name of the channel.
+            description: Name of the subscribable.
             format: string
-            example: my-channel
+            example: my-subscribable
           uid:
             type: string
-            description: UID of the channel.
+            description: UID of the subscribable.
             format: string
+            x-go-name: UID
             example: 1234-5678-9012
           labels:
             type: object
             additionalProperties:
               type: string
               format: string
-            description: Labels of the channel.
+            description: Labels of the subscribable.
             example: { "key": "value" }
           annotations:
             type: object
             additionalProperties:
                 type: string
                 format: string
-            description: Annotations of the channel.
+            description: Annotations of the subscribable.
             example: { "key": "value" }
         required:
           - namespace
@@ -214,11 +215,13 @@ components:
             $ref: '#/components/schemas/Broker'
           description: Brokers is a list of all brokers in the cluster.
           minItems: 0
-        channels:
+        subscribables:
           type: array
           items:
-            $ref: '#/components/schemas/Channel'
-          description:
+            $ref: '#/components/schemas/Subscribable'
+          description: Subscribables is a list of all subscribables in the cluster.
+          minItems: 0
       required:
         - eventTypes
         - brokers
+        - subscribables
