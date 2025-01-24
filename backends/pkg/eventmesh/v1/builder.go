@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
@@ -37,6 +38,12 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	convertedBrokers, err := fetchBrokers(clientset, logger)
 	if err != nil {
 		logger.Errorw("Error fetching and converting brokers", "error", err)
+		return EventMesh{}, err
+	}
+
+	convertedSubscribables, err := fetchSubscribables(ctx, dynamicClient, logger)
+	if err != nil {
+		logger.Errorw("Error fetching and converting subscribables", "error", err)
 		return EventMesh{}, err
 	}
 
@@ -98,10 +105,15 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	for _, br := range convertedBrokers {
 		outputBrokers = append(outputBrokers, *br)
 	}
+	outputSubscribables := make([]Subscribable, 0, len(convertedSubscribables))
+	for _, s := range convertedSubscribables {
+		outputSubscribables = append(outputSubscribables, *s)
+	}
 
 	eventMesh := EventMesh{
-		EventTypes: outputEventTypes,
-		Brokers:    outputBrokers,
+		EventTypes:    outputEventTypes,
+		Brokers:       outputBrokers,
+		Subscribables: outputSubscribables,
 	}
 
 	return eventMesh, nil
@@ -213,6 +225,54 @@ func fetchBrokers(clientset versioned.Interface, logger *zap.SugaredLogger) ([]*
 		convertedBrokers = append(convertedBrokers, &convertedBroker)
 	}
 	return convertedBrokers, err
+}
+
+func fetchSubscribables(ctx context.Context, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) ([]*Subscribable, error) {
+	// first, fetch the subscribable CRDs
+	subscribableCRDs, err := dynamicClient.Resource(
+		schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "customresourcedefinitions",
+		},
+	).List(ctx, metav1.ListOptions{LabelSelector: labels.Set{"messaging.knative.dev/subscribable": "true"}.String()})
+
+	if errors.IsNotFound(err) {
+		return nil, nil
+	}
+
+	if err != nil {
+		logger.Errorw("Error listing subscribable CRDs", "error", err)
+		return nil, err
+	}
+
+	// then, fetch the subscribables
+	subscribables := make([]*Subscribable, 0)
+	for _, crd := range subscribableCRDs.Items {
+		gvr, err := util.GVRFromUnstructured(&crd)
+		if err != nil {
+			logger.Errorw("Error getting GVR from CRD", "error", err)
+			return nil, err
+		}
+
+		subscribableResources, err := dynamicClient.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+
+		if errors.IsNotFound(err) {
+			continue
+		}
+
+		if err != nil {
+			logger.Errorw("Error listing subscribable resources", "error", err)
+			return nil, err
+		}
+
+		for _, resource := range subscribableResources.Items {
+			subscribable := convertSubscribable(gvr, &resource)
+			subscribables = append(subscribables, &subscribable)
+		}
+	}
+
+	return subscribables, nil
 }
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.

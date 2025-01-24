@@ -60,7 +60,8 @@ func (e Endpoint) GetEventMesh(ctx context.Context, _ GetEventMeshRequestObject)
 	}
 
 	return GetEventMesh200JSONResponse{
-		Brokers:    eventMesh.Brokers,
-		EventTypes: eventMesh.EventTypes,
+		Brokers:       eventMesh.Brokers,
+		EventTypes:    eventMesh.EventTypes,
+		Subscribables: eventMesh.Subscribables,
 	}, nil
 }

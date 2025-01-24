@@ -3,6 +3,9 @@ package util
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	v1 "knative.dev/pkg/apis/duck/v1"
 )
 
@@ -26,4 +29,74 @@ func ToStrPtrOrNil(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func GVRFromUnstructured(u *unstructured.Unstructured) (schema.GroupVersionResource, error) {
+	group, err := groupFromUnstructured(u)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+
+	version, err := versionFromUnstructured(u)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+
+	resource, err := resourceFromUnstructured(u)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+
+	return schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: resource,
+	}, nil
+}
+
+func groupFromUnstructured(u *unstructured.Unstructured) (string, error) {
+	content := u.UnstructuredContent()
+	group, found, err := unstructured.NestedString(content, "spec", "group")
+	if !found || err != nil {
+		return "", fmt.Errorf("can't find source kind from source CRD: %w", err)
+	}
+
+	return group, nil
+}
+
+func versionFromUnstructured(u *unstructured.Unstructured) (string, error) {
+	content := u.UnstructuredContent()
+	var version string
+	versions, found, err := unstructured.NestedSlice(content, "spec", "versions")
+	if !found || err != nil || len(versions) == 0 {
+		version, found, err = unstructured.NestedString(content, "spec", "version")
+		if !found || err != nil {
+			return "", fmt.Errorf("can't find source version from source CRD: %w", err)
+		}
+	} else {
+		for _, v := range versions {
+			if vmap, ok := v.(map[string]interface{}); ok {
+				if vmap["served"] == true {
+					version = vmap["name"].(string)
+					break
+				}
+			}
+		}
+	}
+
+	if version == "" {
+		return "", fmt.Errorf("can't find source version from source CRD: %w", err)
+	}
+
+	return version, nil
+}
+
+func resourceFromUnstructured(u *unstructured.Unstructured) (string, error) {
+	content := u.UnstructuredContent()
+	resource, found, err := unstructured.NestedString(content, "spec", "names", "plural")
+	if !found || err != nil {
+		return "", fmt.Errorf("can't find source resource from source CRD: %w", err)
+	}
+
+	return resource, nil
 }
