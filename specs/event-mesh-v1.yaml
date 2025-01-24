@@ -118,12 +118,24 @@ components:
                 format: string
             description: Annotations of the subscribable.
             example: { "key": "value" }
+          group:
+            type: string
+            description: Kubernetes API group of the subscribable, without the version.
+            format: string
+            example: messaging.knative.dev
+          resource:
+            type: string
+            description: Kubernetes API resource of the subscribable.
+            format: string
+            example: inmemorychannels
         required:
           - namespace
           - name
           - uid
           - labels
           - annotations
+          - group
+          - resource
     EventType:
       type: object
       description: EventType is a simplified representation of a Knative Eventing EventType that is easier to consume by the Backstage plugin.
