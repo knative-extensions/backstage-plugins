@@ -44,9 +44,20 @@ export type Broker = {
     providedEventTypes?:string[];
 };
 
+export type Subscribable = {
+    name:string;
+    namespace:string;
+    uid:string;
+    labels?:Record<string, string>;
+    annotations?:Record<string, string>;
+    group:string;
+    kind:string;
+};
+
 type EventMesh = {
     eventTypes:EventType[];
     brokers:Broker[];
+    subscribables:Subscribable[];
 };
 
 export async function getEventMesh(url: string, token: string | undefined):Promise<EventMesh> {
@@ -200,6 +211,12 @@ export class KnativeEventMeshProvider implements EntityProvider {
             const entity = this.buildBrokerEntity(broker);
             entities.push(entity);
         }
+
+        for (const subscribable of eventMesh.subscribables) {
+            const entity = this.buildSubscribableEntity(subscribable);
+            entities.push(entity);
+        }
+
         return entities;
     }
 
@@ -265,6 +282,30 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 system: SystemKnative,
                 owner: OwnerKnative,
                 providesApis: !broker.providedEventTypes ? [] : broker.providedEventTypes.map((eventType:string) => `api:${eventType}`),
+            }
+        }
+    }
+
+    private buildSubscribableEntity(subscribable:Subscribable) {
+        const annotations = subscribable.annotations ?? {} as Record<string, string>;
+        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
+
+        return {
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'Component',
+            metadata: {
+                name: subscribable.name,
+                namespace: subscribable.namespace,
+                labels: subscribable.labels || {} as Record<string, string>,
+                annotations: annotations,
+                // we don't use tags
+                tags: [],
+            },
+            spec: {
+                type: `${subscribable.group}:${subscribable.kind}`,
+                lifecycle: this.env,
+                system: SystemKnative,
+                owner: OwnerKnative,
             }
         }
     }
