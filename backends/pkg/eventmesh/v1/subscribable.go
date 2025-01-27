@@ -3,7 +3,6 @@ package v1
 import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	
 	"knative.dev/backstage-plugins/backends/pkg/util"
 )
 
@@ -15,6 +14,6 @@ func convertSubscribable(gvr schema.GroupVersionResource, u *unstructured.Unstru
 		Annotations: util.FilterAnnotations(u.GetAnnotations()),
 		Labels:      u.GetLabels(),
 		Group:       gvr.Group,
-		Resource:    gvr.Resource,
+		Kind:        u.GetKind(),
 	}
 }

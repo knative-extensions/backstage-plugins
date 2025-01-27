@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,6 +23,17 @@ func NamespacedRefName(ref *v1.KReference) string {
 // NamespacedName returns the namespaced name in the format "namespace/name".
 func NamespacedName(namespace, name string) string {
 	return fmt.Sprintf("%s/%s", namespace, name)
+}
+
+// GKNamespacedName returns the namespaced name in the format "group/kind/namespace/name".
+func GKNamespacedName(group, kind, namespace, name string) string {
+	return fmt.Sprintf("%s/%s/%s/%s", group, kind, namespace, name)
+}
+
+// APIVersionToGroup returns the group part of the API version.
+// For example, "apps/v1" returns "apps".
+func APIVersionToGroup(apiVersion string) string {
+	return apiVersion[:strings.Index(apiVersion, "/")]
 }
 
 func ToStrPtrOrNil(s string) *string {

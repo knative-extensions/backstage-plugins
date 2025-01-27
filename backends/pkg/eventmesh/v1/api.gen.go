@@ -85,6 +85,9 @@ type Subscribable struct {
 	// Group Kubernetes API group of the subscribable, without the version.
 	Group string `json:"group"`
 
+	// Kind Kubernetes API kind of the subscribable.
+	Kind string `json:"kind"`
+
 	// Labels Labels of the subscribable.
 	Labels map[string]string `json:"labels"`
 
@@ -93,9 +96,6 @@ type Subscribable struct {
 
 	// Namespace Namespace of the subscribable.
 	Namespace string `json:"namespace"`
-
-	// Resource Kubernetes API resource of the subscribable.
-	Resource string `json:"resource"`
 
 	// UID UID of the subscribable.
 	UID string `json:"uid"`
