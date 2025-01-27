@@ -136,6 +136,66 @@ components:
           - annotations
           - group
           - kind
+    Source:
+      type: object
+      description: Source is a simplified representation of a Knative Eventing Source that is easier to consume by the Backstage plugin.
+      properties:
+        namespace:
+          type: string
+          description: Namespace of the source.
+          format: string
+          example: my-namespace
+        name:
+          type: string
+          description: Name of the source.
+          format: string
+          example: my-source
+        uid:
+          type: string
+          description: UID of the source.
+          format: string
+          x-go-name: UID
+          example: 1234-5678-9012
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Labels of the source.
+          example: { "key": "value" }
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+            format: string
+          description: Annotations of the source.
+          example: { "key": "value" }
+        providedEventTypes:
+          type: array
+          items:
+            type: string
+            format: string
+          description: List of EventType types provided by the source.
+          example: [ "some-event-type" ]
+        group:
+          type: string
+          description: Kubernetes API group of the source, without the version.
+          format: string
+          example: sources.knative.dev
+        kind:
+          type: string
+          description: Kubernetes API kind of the source.
+          format: string
+          example: ApiServerSource
+      required:
+        - namespace
+        - name
+        - uid
+        - labels
+        - annotations
+        - providedEventTypes
+        - group
+        - kind
     EventType:
       type: object
       description: EventType is a simplified representation of a Knative Eventing EventType that is easier to consume by the Backstage plugin.
@@ -233,7 +293,14 @@ components:
             $ref: '#/components/schemas/Subscribable'
           description: Subscribables is a list of all subscribables in the cluster.
           minItems: 0
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+          description: Sources is a list of all sources in the cluster.
+          minItems: 0
       required:
         - eventTypes
         - brokers
         - subscribables
+        - sources

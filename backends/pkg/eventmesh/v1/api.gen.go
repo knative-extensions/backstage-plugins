@@ -36,6 +36,9 @@ type EventMesh struct {
 	// EventTypes EventTypes is a list of all event types in the cluster. While we can embed the event types in the brokers, we keep them separate because not every event type is tied to a broker.
 	EventTypes []EventType `json:"eventTypes"`
 
+	// Sources Sources is a list of all sources in the cluster.
+	Sources []Source `json:"sources"`
+
 	// Subscribables Subscribables is a list of all subscribables in the cluster.
 	Subscribables []Subscribable `json:"subscribables"`
 }
@@ -75,6 +78,33 @@ type EventType struct {
 
 	// Uid UID of the event type.
 	Uid string `json:"uid"`
+}
+
+// Source Source is a simplified representation of a Knative Eventing Source that is easier to consume by the Backstage plugin.
+type Source struct {
+	// Annotations Annotations of the source.
+	Annotations map[string]string `json:"annotations"`
+
+	// Group Kubernetes API group of the source, without the version.
+	Group string `json:"group"`
+
+	// Kind Kubernetes API kind of the source.
+	Kind string `json:"kind"`
+
+	// Labels Labels of the source.
+	Labels map[string]string `json:"labels"`
+
+	// Name Name of the source.
+	Name string `json:"name"`
+
+	// Namespace Namespace of the source.
+	Namespace string `json:"namespace"`
+
+	// ProvidedEventTypes List of EventType types provided by the source.
+	ProvidedEventTypes []string `json:"providedEventTypes"`
+
+	// UID UID of the source.
+	UID string `json:"uid"`
 }
 
 // Subscribable Subscribable is a simplified representation of a Knative Eventing Subscribable that is easier to consume by the Backstage plugin. These subscribables can be channels at the moment.
