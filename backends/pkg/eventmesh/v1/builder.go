@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
-	"knative.dev/eventing/pkg/apis/messaging/v1"
+	v1 "knative.dev/eventing/pkg/apis/messaging/v1"
 	"knative.dev/eventing/pkg/client/clientset/versioned"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
 
