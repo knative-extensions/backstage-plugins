@@ -15,5 +15,7 @@ func convertSubscribable(gvr schema.GroupVersionResource, u *unstructured.Unstru
 		Labels:      u.GetLabels(),
 		Group:       gvr.Group,
 		Kind:        u.GetKind(),
+		// this field will be populated later on
+		ProvidedEventTypes: []string{},
 	}
 }

@@ -52,6 +52,7 @@ export type Subscribable = {
     annotations?:Record<string, string>;
     group:string;
     kind:string;
+    providedEventTypes?:string[];
 };
 
 type EventMesh = {
@@ -306,6 +307,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 lifecycle: this.env,
                 system: SystemKnative,
                 owner: OwnerKnative,
+                providesApis: !subscribable.providedEventTypes ? [] : subscribable.providedEventTypes.map((eventType:string) => `api:${eventType}`),
             }
         }
     }

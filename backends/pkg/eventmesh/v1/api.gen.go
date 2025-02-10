@@ -63,7 +63,7 @@ type EventType struct {
 	// Namespace Namespace of the event type.
 	Namespace string `json:"namespace"`
 
-	// Reference Reference is the EventTypes's reference to a resource like a broker or a channel. It is in the format `<namespace>/<name>`.
+	// Reference Reference is the EventTypes's reference to a resource like a broker or a channel. It is in the format `group/kind/namespace/name`.
 	Reference *string `json:"reference,omitempty"`
 
 	// SchemaData Schema data.
@@ -126,6 +126,9 @@ type Subscribable struct {
 
 	// Namespace Namespace of the subscribable.
 	Namespace string `json:"namespace"`
+
+	// ProvidedEventTypes List of event types provided by the subscribable.
+	ProvidedEventTypes []string `json:"providedEventTypes"`
 
 	// UID UID of the subscribable.
 	UID string `json:"uid"`

@@ -53,7 +53,8 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	// map key: "<namespace>/<name>"
 	brokerMap := make(map[string]*Broker)
 	for _, cbr := range convertedBrokers {
-		brokerMap[cbr.GetNamespacedName()] = cbr
+		key := util.GKNamespacedName("eventing.knative.dev", "Broker", cbr.Namespace, cbr.Name)
+		brokerMap[key] = cbr
 	}
 
 	subscribableMap := make(map[string]*Subscribable)
@@ -69,13 +70,26 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 		return EventMesh{}, err
 	}
 
-	// register the event types in the brokers
+	// register the event types in the brokers and channels
 	for _, et := range convertedEventTypes {
 		if et.Reference != nil {
 			if br, ok := brokerMap[*et.Reference]; ok {
 				br.ProvidedEventTypes = append(br.ProvidedEventTypes, et.NamespacedName())
+			} else if subscribable, ok := subscribableMap[*et.Reference]; ok {
+				subscribable.ProvidedEventTypes = append(subscribable.ProvidedEventTypes, et.NamespacedName())
+			} else {
+				logger.Infow("Event type reference not found", "eventType", et.NamespacedName(), "reference", *et.Reference)
 			}
 		}
+	}
+
+	// build a map for easier access to the ETs by their namespaced name.
+	// we need this map when processing the triggers to find out ET definitions for the ET references
+	// brokers and channels provide.
+	// map key: "<namespace>/<eventType.name>"
+	etByNamespacedName := make(map[string]*EventType)
+	for _, et := range convertedEventTypes {
+		etByNamespacedName[et.NamespacedName()] = et
 	}
 
 	// fetch the triggers we will process them later
@@ -83,15 +97,6 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	if err != nil {
 		logger.Errorw("Error listing triggers", "error", err)
 		return EventMesh{}, err
-	}
-
-	// build a map for easier access to the ETs by their namespaced name.
-	// we need this map when processing the triggers to find out ET definitions for the ET references
-	// brokers provide.
-	// map key: "<namespace>/<eventType.name>"
-	etByNamespacedName := make(map[string]*EventType)
-	for _, et := range convertedEventTypes {
-		etByNamespacedName[et.NamespacedName()] = et
 	}
 
 	for _, trigger := range triggers.Items {
@@ -110,7 +115,7 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	}
 
 	for _, subscription := range subscriptions.Items {
-		err := processSubscription(ctx, &subscription, subscribableMap, dynamicClient, logger)
+		err := processSubscription(ctx, &subscription, subscribableMap, etByNamespacedName, dynamicClient, logger)
 		if err != nil {
 			logger.Errorw("Error processing subscription", "error", err)
 			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
@@ -166,7 +171,7 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 		logger.Errorw("Trigger has no broker", "namespace", trigger.Namespace, "trigger", trigger.Name)
 		return nil
 	}
-	brokerRef := util.NamespacedName(trigger.Namespace, trigger.Spec.Broker)
+	brokerRef := util.GKNamespacedName("eventing.knative.dev", "Broker", trigger.Namespace, trigger.Spec.Broker)
 	if _, ok := brokerMap[brokerRef]; !ok {
 		logger.Infow("Broker not found", "namespace", trigger.Namespace, "trigger", trigger.Name, "broker", trigger.Spec.Broker)
 		return nil
@@ -182,7 +187,7 @@ func processTrigger(ctx context.Context, trigger *eventingv1.Trigger, brokerMap 
 	return nil
 }
 
-func processSubscription(ctx context.Context, subscription *v1.Subscription, subscribableMap map[string]*Subscribable, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) error {
+func processSubscription(ctx context.Context, subscription *v1.Subscription, subscribableMap map[string]*Subscribable, etByNamespacedName map[string]*EventType, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) error {
 	// if the subscription has no subscriber, we can skip it, there's no relation to show on Backstage side
 	if subscription.Spec.Subscriber.Ref == nil {
 		logger.Debugw("Subscription has no subscriber ref; cannot process this subscription", "namespace", subscription.Namespace, "subscription", subscription.Name)
@@ -207,6 +212,16 @@ func processSubscription(ctx context.Context, subscription *v1.Subscription, sub
 	if _, ok := subscribableMap[channelRef]; !ok {
 		logger.Infow("Channel not found", "namespace", subscription.Namespace, "subscription", subscription.Name, "channel", channel.Name)
 		return nil
+	}
+
+	eventTypes := subscribableMap[channelRef].ProvidedEventTypes
+	logger.Infow("Collected provided event types", "namespace", subscription.Namespace, "subscription", subscription.Name, "channel", channel.Name, "eventTypes", eventTypes)
+
+	for _, eventType := range eventTypes {
+		key := util.NamespacedName(subscription.Namespace, eventType)
+		if et, ok := etByNamespacedName[key]; ok {
+			et.ConsumedBy = append(et.ConsumedBy, subscriberBackstageId)
+		}
 	}
 
 	return nil
