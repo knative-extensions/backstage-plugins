@@ -52,15 +52,28 @@ export type Subscribable = {
     annotations?:Record<string, string>;
     group:string;
     kind:string;
+    providedEventTypes?:string[];
+};
+
+export type Source = {
+    name:string;
+    namespace:string;
+    uid:string;
+    labels?:Record<string, string>;
+    annotations?:Record<string, string>;
+    group:string;
+    kind:string;
+    providedEventTypes?:string[];
 };
 
 type EventMesh = {
     eventTypes:EventType[];
     brokers:Broker[];
     subscribables:Subscribable[];
+    sources:Source[];
 };
 
-export async function getEventMesh(url: string, token: string | undefined):Promise<EventMesh> {
+export async function getEventMesh(url:string, token:string | undefined):Promise<EventMesh> {
     const response = await fetch(`${url}`, {
         headers: {
             'Authorization': `Bearer ${token}`
@@ -217,6 +230,11 @@ export class KnativeEventMeshProvider implements EntityProvider {
             entities.push(entity);
         }
 
+        for (const source of eventMesh.sources) {
+            const entity = this.buildSourceEntity(source);
+            entities.push(entity);
+        }
+
         return entities;
     }
 
@@ -306,6 +324,32 @@ export class KnativeEventMeshProvider implements EntityProvider {
                 lifecycle: this.env,
                 system: SystemKnative,
                 owner: OwnerKnative,
+                providesApis: !subscribable.providedEventTypes ? [] : subscribable.providedEventTypes.map((eventType:string) => `api:${eventType}`),
+            }
+        }
+    }
+
+    private buildSourceEntity(source:Source) {
+        const annotations = source.annotations ?? {} as Record<string, string>;
+        annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
+
+        return {
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'Component',
+            metadata: {
+                name: source.name,
+                namespace: source.namespace,
+                labels: source.labels || {} as Record<string, string>,
+                annotations: annotations,
+                // we don't use tags
+                tags: [],
+            },
+            spec: {
+                type: `${source.group}:${source.kind}`,
+                lifecycle: this.env,
+                system: SystemKnative,
+                owner: OwnerKnative,
+                providesApis: !source.providedEventTypes ? [] : source.providedEventTypes.map((eventType:string) => `api:${eventType}`),
             }
         }
     }

@@ -128,6 +128,13 @@ components:
             description: Kubernetes API kind of the subscribable.
             format: string
             example: InMemoryChannel
+          providedEventTypes:
+            type: array
+            items:
+              type: string
+              format: string
+            description: List of event types provided by the subscribable.
+            example: [ "my-namespace/my-event-type" ]
         required:
           - namespace
           - name
@@ -136,6 +143,7 @@ components:
           - annotations
           - group
           - kind
+          - providedEventTypes
     Source:
       type: object
       description: Source is a simplified representation of a Knative Eventing Source that is easier to consume by the Backstage plugin.
@@ -170,13 +178,20 @@ components:
             format: string
           description: Annotations of the source.
           example: { "key": "value" }
+        providedEventTypeTypes:
+          type: array
+          items:
+            type: string
+            format: string
+          description: List of EventType types provided by the source. These are simply the `spec.type` of the EventTypes.
+          example: [ "some-event-type" ]
         providedEventTypes:
           type: array
           items:
             type: string
             format: string
-          description: List of EventType types provided by the source.
-          example: [ "some-event-type" ]
+          description: List of EventTypes provided by the source. These are the `<namespace/name>` of the EventTypes.
+          example: [ "my-namespace/some-event-type" ]
         group:
           type: string
           description: Kubernetes API group of the source, without the version.
@@ -187,6 +202,8 @@ components:
           description: Kubernetes API kind of the source.
           format: string
           example: ApiServerSource
+        sink:
+          $ref: '#/components/schemas/GroupKindNamespacedName'
       required:
         - namespace
         - name
@@ -251,10 +268,7 @@ components:
           description: Annotations of the event type. These are passed as is, except that are filtered out by the `FilterAnnotations` function.
           example: { "key": "value" }
         reference:
-          type: string
-          format: string
-          description: Reference is the EventTypes's reference to a resource like a broker or a channel. It is in the format `<namespace>/<name>`.
-          example: my-namespace/my-broker
+          $ref: '#/components/schemas/GroupKindNamespacedName'
         consumedBy:
           type: array
           items:
@@ -271,6 +285,35 @@ components:
         - labels
         - annotations
         - consumedBy
+    GroupKindNamespacedName:
+        type: object
+        description: GroupKindNamespacedName is a struct that holds the group, kind, namespace, and name of a Kubernetes resource.
+        properties:
+          group:
+            type: string
+            description: Kubernetes API group of the resource, without the version.
+            format: string
+            example: eventing.knative.dev
+          kind:
+            type: string
+            description: Kubernetes API kind of the resource.
+            format: string
+            example: Broker
+          namespace:
+            type: string
+            description: Namespace of the resource.
+            format: string
+            example: my-namespace
+          name:
+            type: string
+            description: Name of the resource.
+            format: string
+            example: my-broker
+        required:
+            - group
+            - kind
+            - namespace
+            - name
     EventMesh:
       type: object
       description: EventMesh is the top-level struct that holds the event mesh data. It's the struct that's serialized and sent to the Backstage plugin.

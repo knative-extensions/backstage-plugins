@@ -63,5 +63,6 @@ func (e Endpoint) GetEventMesh(ctx context.Context, _ GetEventMeshRequestObject)
 		Brokers:       eventMesh.Brokers,
 		EventTypes:    eventMesh.EventTypes,
 		Subscribables: eventMesh.Subscribables,
+		Sources:       eventMesh.Sources,
 	}, nil
 }

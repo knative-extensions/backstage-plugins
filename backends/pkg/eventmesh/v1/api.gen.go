@@ -63,8 +63,8 @@ type EventType struct {
 	// Namespace Namespace of the event type.
 	Namespace string `json:"namespace"`
 
-	// Reference Reference is the EventTypes's reference to a resource like a broker or a channel. It is in the format `<namespace>/<name>`.
-	Reference *string `json:"reference,omitempty"`
+	// Reference GroupKindNamespacedName is a struct that holds the group, kind, namespace, and name of a Kubernetes resource.
+	Reference *GroupKindNamespacedName `json:"reference,omitempty"`
 
 	// SchemaData Schema data.
 	// Deprecated:
@@ -78,6 +78,21 @@ type EventType struct {
 
 	// Uid UID of the event type.
 	Uid string `json:"uid"`
+}
+
+// GroupKindNamespacedName GroupKindNamespacedName is a struct that holds the group, kind, namespace, and name of a Kubernetes resource.
+type GroupKindNamespacedName struct {
+	// Group Kubernetes API group of the resource, without the version.
+	Group string `json:"group"`
+
+	// Kind Kubernetes API kind of the resource.
+	Kind string `json:"kind"`
+
+	// Name Name of the resource.
+	Name string `json:"name"`
+
+	// Namespace Namespace of the resource.
+	Namespace string `json:"namespace"`
 }
 
 // Source Source is a simplified representation of a Knative Eventing Source that is easier to consume by the Backstage plugin.
@@ -100,8 +115,14 @@ type Source struct {
 	// Namespace Namespace of the source.
 	Namespace string `json:"namespace"`
 
-	// ProvidedEventTypes List of EventType types provided by the source.
+	// ProvidedEventTypeTypes List of EventType types provided by the source. These are simply the `spec.type` of the EventTypes.
+	ProvidedEventTypeTypes *[]string `json:"providedEventTypeTypes,omitempty"`
+
+	// ProvidedEventTypes List of EventTypes provided by the source. These are the `<namespace/name>` of the EventTypes.
 	ProvidedEventTypes []string `json:"providedEventTypes"`
+
+	// Sink GroupKindNamespacedName is a struct that holds the group, kind, namespace, and name of a Kubernetes resource.
+	Sink *GroupKindNamespacedName `json:"sink,omitempty"`
 
 	// UID UID of the source.
 	UID string `json:"uid"`
@@ -126,6 +147,9 @@ type Subscribable struct {
 
 	// Namespace Namespace of the subscribable.
 	Namespace string `json:"namespace"`
+
+	// ProvidedEventTypes List of event types provided by the subscribable.
+	ProvidedEventTypes []string `json:"providedEventTypes"`
 
 	// UID UID of the subscribable.
 	UID string `json:"uid"`
