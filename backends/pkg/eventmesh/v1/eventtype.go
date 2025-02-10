@@ -15,13 +15,17 @@ func (et EventType) NamespacedType() string {
 	return util.NamespacedName(et.Namespace, et.Type)
 }
 
-// TODO: remove
 // convertEventType converts a Knative Eventing EventType to a simplified representation that is easier to consume by the Backstage plugin.
 // see EventType.
 func convertEventType(et *v1beta2.EventType) EventType {
-	reference := ""
+	var reference *GroupKindNamespacedName
 	if et.Spec.Reference != nil {
-		reference = util.GKNamespacedName(util.APIVersionToGroup(et.Spec.Reference.APIVersion), et.Spec.Reference.Kind, et.Namespace, et.Spec.Reference.Name)
+		reference = &GroupKindNamespacedName{
+			Group:     util.APIVersionToGroup(et.Spec.Reference.APIVersion),
+			Kind:      et.Spec.Reference.Kind,
+			Namespace: et.Namespace,
+			Name:      et.Spec.Reference.Name,
+		}
 	}
 	return EventType{
 		Name:        et.Name,
@@ -33,7 +37,7 @@ func convertEventType(et *v1beta2.EventType) EventType {
 		SchemaURL:   util.ToStrPtrOrNil(et.Spec.Schema.String()),
 		Labels:      et.Labels,
 		Annotations: util.FilterAnnotations(et.Annotations),
-		Reference:   util.ToStrPtrOrNil(reference),
+		Reference:   reference,
 		// this field will be populated later on, when we have process the triggers
 		ConsumedBy: make([]string, 0),
 	}

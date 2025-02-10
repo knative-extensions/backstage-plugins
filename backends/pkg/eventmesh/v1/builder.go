@@ -48,6 +48,12 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 		return EventMesh{}, err
 	}
 
+	convertedSourceEntries, err := fetchSources(ctx, dynamicClient, logger)
+	if err != nil {
+		logger.Errorw("Error fetching and converting sources", "error", err)
+		return EventMesh{}, err
+	}
+
 	// build a broker map and a subscribable map for easier access.
 	// we need this map to register the event types in the brokers when we are processing the event types.
 	// map key: "<namespace>/<name>"
@@ -73,9 +79,9 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	// register the event types in the brokers and channels
 	for _, et := range convertedEventTypes {
 		if et.Reference != nil {
-			if br, ok := brokerMap[*et.Reference]; ok {
+			if br, ok := brokerMap[et.Reference.String()]; ok {
 				br.ProvidedEventTypes = append(br.ProvidedEventTypes, et.NamespacedName())
-			} else if subscribable, ok := subscribableMap[*et.Reference]; ok {
+			} else if subscribable, ok := subscribableMap[et.Reference.String()]; ok {
 				subscribable.ProvidedEventTypes = append(subscribable.ProvidedEventTypes, et.NamespacedName())
 			} else {
 				logger.Infow("Event type reference not found", "eventType", et.NamespacedName(), "reference", *et.Reference)
@@ -90,6 +96,29 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	etByNamespacedName := make(map[string]*EventType)
 	for _, et := range convertedEventTypes {
 		etByNamespacedName[et.NamespacedName()] = et
+	}
+
+	// build a map for easier access to the ETs by their type.
+	// there can be multiple ETs with the same type but different names.
+	// we need this map when processing the sources to find out ET definitions for the ET types.
+	// map key does not have a namespace: "<eventType.type>"
+	etsByType := make(map[string][]*EventType)
+	for _, et := range convertedEventTypes {
+		etsByType[et.Type] = append(etsByType[et.Type], et)
+	}
+
+	// register the event types in the sources
+	for _, source := range convertedSourceEntries {
+		if source.ProvidedEventTypeTypes == nil {
+			continue
+		}
+		for _, providedType := range *source.ProvidedEventTypeTypes {
+			if ets, ok := etsByType[providedType]; ok {
+				for _, et := range ets {
+					source.ProvidedEventTypes = append(source.ProvidedEventTypes, et.NamespacedName())
+				}
+			}
+		}
 	}
 
 	// fetch the triggers we will process them later
@@ -135,11 +164,16 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 	for _, s := range convertedSubscribables {
 		outputSubscribables = append(outputSubscribables, *s)
 	}
+	outputSources := make([]Source, 0, len(convertedSourceEntries))
+	for _, s := range convertedSourceEntries {
+		outputSources = append(outputSources, *s)
+	}
 
 	eventMesh := EventMesh{
 		EventTypes:    outputEventTypes,
 		Brokers:       outputBrokers,
 		Subscribables: outputSubscribables,
+		Sources:       outputSources,
 	}
 
 	return eventMesh, nil
@@ -339,6 +373,58 @@ func fetchSubscribables(ctx context.Context, dynamicClient dynamic.Interface, lo
 	}
 
 	return subscribables, nil
+}
+
+func fetchSources(ctx context.Context, dynamicClient dynamic.Interface, logger *zap.SugaredLogger) ([]*Source, error) {
+	// first, fetch the source CRDs
+	sourceCRDs, err := dynamicClient.Resource(
+		schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "customresourcedefinitions",
+		},
+	).List(ctx, metav1.ListOptions{LabelSelector: labels.Set{"duck.knative.dev/source": "true"}.String()})
+
+	if errors.IsNotFound(err) {
+		return nil, nil
+	}
+
+	if err != nil {
+		logger.Errorw("Error listing source CRDs", "error", err)
+		return nil, err
+	}
+
+	// then, fetch the sources
+	sources := make([]*Source, 0)
+	for _, crd := range sourceCRDs.Items {
+		gvr, err := util.GVRFromUnstructured(&crd)
+		if err != nil {
+			logger.Errorw("Error getting GVR from CRD", "error", err)
+			return nil, err
+		}
+
+		sourceResources, err := dynamicClient.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+
+		if errors.IsNotFound(err) {
+			continue
+		}
+
+		if err != nil {
+			logger.Errorw("Error listing source resources", "error", err)
+			return nil, err
+		}
+
+		for _, resource := range sourceResources.Items {
+			sourceEntry, err := convertSource(gvr, crd, &resource)
+			if err != nil {
+				logger.Errorw("Error converting source", "error", err)
+				return nil, err
+			}
+			sources = append(sources, &sourceEntry)
+		}
+	}
+
+	return sources, nil
 }
 
 // fetchEventTypes fetches the event types and converts them to the representation that's consumed by the Backstage plugin.

@@ -178,13 +178,20 @@ components:
             format: string
           description: Annotations of the source.
           example: { "key": "value" }
+        providedEventTypeTypes:
+          type: array
+          items:
+            type: string
+            format: string
+          description: List of EventType types provided by the source. These are simply the `spec.type` of the EventTypes.
+          example: [ "some-event-type" ]
         providedEventTypes:
           type: array
           items:
             type: string
             format: string
-          description: List of EventType types provided by the source.
-          example: [ "some-event-type" ]
+          description: List of EventTypes provided by the source. These are the `<namespace/name>` of the EventTypes.
+          example: [ "my-namespace/some-event-type" ]
         group:
           type: string
           description: Kubernetes API group of the source, without the version.
@@ -195,6 +202,8 @@ components:
           description: Kubernetes API kind of the source.
           format: string
           example: ApiServerSource
+        sink:
+          $ref: '#/components/schemas/GroupKindNamespacedName'
       required:
         - namespace
         - name
