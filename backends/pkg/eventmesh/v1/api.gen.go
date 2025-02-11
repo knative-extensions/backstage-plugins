@@ -116,7 +116,7 @@ type Source struct {
 	Namespace string `json:"namespace"`
 
 	// ProvidedEventTypeTypes List of EventType types provided by the source. These are simply the `spec.type` of the EventTypes.
-	ProvidedEventTypeTypes *[]string `json:"providedEventTypeTypes,omitempty"`
+	ProvidedEventTypeTypes []string `json:"providedEventTypeTypes"`
 
 	// ProvidedEventTypes List of EventTypes provided by the source. These are the `<namespace/name>` of the EventTypes.
 	ProvidedEventTypes []string `json:"providedEventTypes"`

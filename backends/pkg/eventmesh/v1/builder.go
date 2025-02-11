@@ -112,7 +112,7 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 		if source.ProvidedEventTypeTypes == nil {
 			continue
 		}
-		for _, providedType := range *source.ProvidedEventTypeTypes {
+		for _, providedType := range source.ProvidedEventTypeTypes {
 			if ets, ok := etsByType[providedType]; ok {
 				for _, et := range ets {
 					source.ProvidedEventTypes = append(source.ProvidedEventTypes, et.NamespacedName())

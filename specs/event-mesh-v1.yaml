@@ -210,6 +210,7 @@ components:
         - uid
         - labels
         - annotations
+        - providedEventTypeTypes
         - providedEventTypes
         - group
         - kind

@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,6 +21,8 @@ import (
 
 	eventingv1 "knative.dev/eventing/pkg/apis/eventing/v1"
 	eventingv1beta2 "knative.dev/eventing/pkg/apis/eventing/v1beta2"
+	messagingv1 "knative.dev/eventing/pkg/apis/messaging/v1"
+	sourcesv1 "knative.dev/eventing/pkg/apis/sources/v1"
 
 	fakeclientset "knative.dev/eventing/pkg/client/clientset/versioned/fake"
 	testingv1 "knative.dev/eventing/pkg/reconciler/testing/v1"
@@ -28,10 +31,12 @@ import (
 
 func TestBuildEventMesh(t *testing.T) {
 	tests := []struct {
-		name         string
-		brokers      []*eventingv1.Broker
-		eventTypes   []*eventingv1beta2.EventType
-		triggers     []*eventingv1.Trigger
+		name       string
+		brokers    []*eventingv1.Broker
+		eventTypes []*eventingv1beta2.EventType
+		triggers   []*eventingv1.Trigger
+		// subscribables []*eventingduckv1.Subscribable
+		// sources []*eventingv1.Source
 		extraObjects []runtime.Object
 		want         EventMesh
 		error        bool
@@ -106,10 +111,17 @@ func TestBuildEventMesh(t *testing.T) {
 						SchemaURL:   ptr.To("http://test-eventtype-schema"),
 						Labels:      map[string]string{"test-eventtype-label": "foo"},
 						Annotations: map[string]string{"test-eventtype-annotation": "foo"},
-						Reference:   ptr.To("test-ns/test-broker"),
-						ConsumedBy:  []string{"test-subscriber"},
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
+						ConsumedBy: []string{"test-subscriber"},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -132,13 +144,20 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -164,10 +183,15 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype-1",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type-1",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-1",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{},
 					},
 					{
@@ -178,6 +202,8 @@ func TestBuildEventMesh(t *testing.T) {
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -211,20 +237,32 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype-1",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker-1"),
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker-1",
+						},
 						ConsumedBy: []string{},
 					},
 					{
-						Name:       "test-eventtype-2",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker-2"),
+						Name:      "test-eventtype-2",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker-2",
+						},
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -270,13 +308,20 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -314,13 +359,20 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -366,13 +418,20 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -424,20 +483,32 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype-1",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type-1",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-1",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{"test-subscriber"},
 					},
 					{
-						Name:       "test-eventtype-2",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type-2",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype-2",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-2",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{"test-subscriber"},
 					},
 				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
 			},
 		},
 		{
@@ -490,18 +561,247 @@ func TestBuildEventMesh(t *testing.T) {
 				},
 				EventTypes: []EventType{
 					{
-						Name:       "test-eventtype-1",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type-1",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype-1",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-1",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{"test-subscriber"},
 					},
 					{
-						Name:       "test-eventtype-2",
-						Namespace:  "test-ns",
-						Type:       "test-eventtype-type-2",
-						Reference:  ptr.To("test-ns/test-broker"),
+						Name:      "test-eventtype-2",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type-2",
+						Reference: &GroupKindNamespacedName{
+							Group:     "eventing.knative.dev",
+							Kind:      "Broker",
+							Namespace: "test-ns",
+							Name:      "test-broker",
+						},
 						ConsumedBy: []string{"test-subscriber"},
+					},
+				},
+				Subscribables: make([]Subscribable, 0),
+				Sources:       make([]Source, 0),
+			},
+		},
+		{
+			name: "With 1 channel, 1 type",
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(reference("messaging.knative.dev/v1", "InMemoryChannel", "test-ns", "test-imc")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{},
+			extraObjects: []runtime.Object{
+				&apiextensionsv1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "inmemorychannels.messaging.knative.dev",
+						Labels: map[string]string{
+							"messaging.knative.dev/subscribable": "true",
+						},
+					},
+					Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+						Group: "messaging.knative.dev",
+						Names: apiextensionsv1.CustomResourceDefinitionNames{
+							Kind:     "InMemoryChannel",
+							ListKind: "InMemoryChannelList",
+							Plural:   "inmemorychannels",
+						},
+						Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+							{
+								Name:    "v1",
+								Served:  true,
+								Storage: true,
+							},
+						},
+					},
+				},
+				&messagingv1.InMemoryChannel{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-imc",
+						Namespace: "test-ns",
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []Broker{},
+				EventTypes: []EventType{
+					{
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "messaging.knative.dev",
+							Kind:      "InMemoryChannel",
+							Namespace: "test-ns",
+							Name:      "test-imc",
+						},
+						ConsumedBy: []string{},
+					},
+				},
+				Subscribables: []Subscribable{
+					{
+						Group:              "messaging.knative.dev",
+						Kind:               "InMemoryChannel",
+						Name:               "test-imc",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype"},
+					},
+				},
+				Sources: make([]Source, 0),
+			},
+		},
+		{
+			name: "With 1 channel, 1 type, 1 subscriber",
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+					testingv1beta2.WithEventTypeReference(reference("messaging.knative.dev/v1", "InMemoryChannel", "test-ns", "test-imc")),
+				),
+			},
+			triggers: []*eventingv1.Trigger{},
+			extraObjects: []runtime.Object{
+				&apiextensionsv1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "inmemorychannels.messaging.knative.dev",
+						Labels: map[string]string{
+							"messaging.knative.dev/subscribable": "true",
+						},
+					},
+					Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+						Group: "messaging.knative.dev",
+						Names: apiextensionsv1.CustomResourceDefinitionNames{
+							Kind:     "InMemoryChannel",
+							ListKind: "InMemoryChannelList",
+							Plural:   "inmemorychannels",
+						},
+						Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+							{
+								Name:    "v1",
+								Served:  true,
+								Storage: true,
+							},
+						},
+					},
+				},
+				&messagingv1.InMemoryChannel{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-imc",
+						Namespace: "test-ns",
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []Broker{},
+				EventTypes: []EventType{
+					{
+						Name:      "test-eventtype",
+						Namespace: "test-ns",
+						Type:      "test-eventtype-type",
+						Reference: &GroupKindNamespacedName{
+							Group:     "messaging.knative.dev",
+							Kind:      "InMemoryChannel",
+							Namespace: "test-ns",
+							Name:      "test-imc",
+						},
+						ConsumedBy: []string{},
+					},
+				},
+				Subscribables: []Subscribable{
+					{
+						Group:              "messaging.knative.dev",
+						Kind:               "InMemoryChannel",
+						Name:               "test-imc",
+						Namespace:          "test-ns",
+						ProvidedEventTypes: []string{"test-ns/test-eventtype"},
+					},
+				},
+				Sources: make([]Source, 0),
+			},
+		},
+		{
+			name: "With 1 source, 2 types",
+			eventTypes: []*eventingv1beta2.EventType{
+				testingv1beta2.NewEventType("test-eventtype", "test-ns",
+					testingv1beta2.WithEventTypeType("test-eventtype-type"),
+				),
+				testingv1beta2.NewEventType("test-eventtype-used-in-source", "test-ns",
+					testingv1beta2.WithEventTypeType("dev.knative.apiserver.resource.add"),
+				),
+			},
+			triggers: []*eventingv1.Trigger{},
+			extraObjects: []runtime.Object{
+				&apiextensionsv1.CustomResourceDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "sources.knative.dev",
+						Labels: map[string]string{
+							"duck.knative.dev/source": "true",
+						},
+						Annotations: map[string]string{
+							"registry.knative.dev/eventTypes": `
+							[
+							  {
+							    "type": "dev.knative.apiserver.resource.add",
+							    "description": "CloudEvent type used for add operations when in Resource mode"
+							  }
+							]
+							`,
+						},
+					},
+					Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+						Group: "sources.knative.dev",
+						Names: apiextensionsv1.CustomResourceDefinitionNames{
+							Kind:     "ApiServerSource",
+							ListKind: "ApiServerSourceList",
+							Plural:   "apiserversources",
+						},
+						Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+							{
+								Name:    "v1",
+								Served:  true,
+								Storage: true,
+							},
+						},
+					},
+				},
+				&sourcesv1.ApiServerSource{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-src",
+						Namespace: "test-ns",
+					},
+				},
+			},
+			want: EventMesh{
+				Brokers: []Broker{},
+				EventTypes: []EventType{
+					{
+						Name:       "test-eventtype",
+						Namespace:  "test-ns",
+						Type:       "test-eventtype-type",
+						ConsumedBy: []string{},
+					},
+					{
+						Name:       "test-eventtype-used-in-source",
+						Namespace:  "test-ns",
+						Type:       "dev.knative.apiserver.resource.add",
+						ConsumedBy: []string{},
+					},
+				},
+				Subscribables: make([]Subscribable, 0),
+				Sources: []Source{
+					{
+						Group:                  "sources.knative.dev",
+						Kind:                   "ApiServerSource",
+						Name:                   "test-src",
+						Namespace:              "test-ns",
+						ProvidedEventTypeTypes: []string{"dev.knative.apiserver.resource.add"},
+						ProvidedEventTypes:     []string{"test-ns/test-eventtype-used-in-source"},
 					},
 				},
 			},
@@ -524,6 +824,9 @@ func TestBuildEventMesh(t *testing.T) {
 		sc := runtime.NewScheme()
 		_ = corev1.AddToScheme(sc)
 		_ = eventingv1.AddToScheme(sc)
+		_ = messagingv1.AddToScheme(sc)
+		_ = sourcesv1.AddToScheme(sc)
+		_ = apiextensionsv1.AddToScheme(sc)
 
 		fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(sc, tt.extraObjects...)
 
@@ -559,11 +862,15 @@ func WithEventTypeFilter(et string) testingv1.TriggerOption {
 }
 
 func brokerReference(brokerName, namespace string) *duckv1.KReference {
+	return reference("eventing.knative.dev/v1", "Broker", namespace, brokerName)
+}
+
+func reference(apiVersion string, kind string, namespace string, name string) *duckv1.KReference {
 	return &duckv1.KReference{
-		APIVersion: "eventing.knative.dev/v1",
-		Kind:       "Broker",
-		Name:       brokerName,
+		APIVersion: apiVersion,
+		Kind:       kind,
 		Namespace:  namespace,
+		Name:       name,
 	}
 }
 

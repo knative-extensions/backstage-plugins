@@ -41,7 +41,7 @@ func convertSource(gvr schema.GroupVersionResource, crd unstructured.Unstructure
 		UID:                    string(source.GetUID()),
 		Annotations:            util.FilterAnnotations(source.GetAnnotations()),
 		Labels:                 source.GetLabels(),
-		ProvidedEventTypeTypes: &providedEventTypeTypes,
+		ProvidedEventTypeTypes: providedEventTypeTypes,
 		// this field will be populated later on
 		ProvidedEventTypes: []string{},
 		Group:              gvr.Group,

@@ -33,6 +33,13 @@ func GKNamespacedName(group, kind, namespace, name string) string {
 // APIVersionToGroup returns the group part of the API version.
 // For example, "apps/v1" returns "apps".
 func APIVersionToGroup(apiVersion string) string {
+	// The group part is before the first "/".
+	// For example, "apps/v1" returns "apps".
+	// if there is no "/", the whole string is the group.
+	if !strings.Contains(apiVersion, "/") {
+		return apiVersion
+	}
+
 	return apiVersion[:strings.Index(apiVersion, "/")]
 }
 
