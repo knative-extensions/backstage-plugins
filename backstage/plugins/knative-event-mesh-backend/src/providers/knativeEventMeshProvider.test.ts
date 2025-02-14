@@ -1,7 +1,7 @@
 import {getVoidLogger} from '@backstage/backend-common';
 import {ApiEntity, ComponentEntity} from "@backstage/catalog-model";
 
-import {Broker, EventType, KnativeEventMeshProvider} from "./knativeEventMeshProvider";
+import {Broker, EventType, KnativeEventMeshProvider, Source, Subscribable} from "./knativeEventMeshProvider";
 import {KnativeEventMeshProviderConfig} from "./types";
 
 describe('KnativeEventMeshProvider', () => {
@@ -222,4 +222,211 @@ describe('KnativeEventMeshProvider', () => {
 
         }
     });
+
+    describe('buildSubscribableEntity', () => {
+        const providerConfig:KnativeEventMeshProviderConfig = {
+            id: 'test',
+            baseUrl: 'http://example.com',
+            schedule: undefined,
+        };
+
+        const provider = new KnativeEventMeshProvider(providerConfig, logger, (null as any));
+
+        type TestCase = {
+            name:string;
+            input:Subscribable;
+            expected:ComponentEntity;
+        };
+
+        const testCases:TestCase[] = [
+            {
+                name: 'minimal information',
+                input: {
+                    name: 'test',
+                    namespace: 'test',
+                    uid: 'test',
+                    kind: 'test-kind',
+                    group: 'test-group',
+                },
+                expected: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'Component',
+                    metadata: {
+                        name: 'test',
+                        namespace: 'test',
+                        annotations: {
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
+                        },
+                        labels: {},
+                        tags: [],
+                    },
+                    spec: {
+                        type: 'test-group:test-kind',
+                        owner: 'knative',
+                        system: 'knative-event-mesh',
+                        lifecycle: 'test',
+                        providesApis: [],
+                    },
+                },
+            },
+            {
+                name: 'all information',
+                input: {
+                    name: 'test-subscribable',
+                    namespace: 'test-ns',
+                    uid: 'test-uid',
+                    labels: {
+                        "test-label": "test-label-value",
+                    },
+                    annotations: {
+                        "test-annotation": "test-annotation-value",
+                    },
+                    providedEventTypes: [
+                        "test-ns/test-type",
+                    ],
+                    kind: "test-kind",
+                    group: "test-group",
+                },
+                expected: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'Component',
+                    metadata: {
+                        name: 'test-subscribable',
+                        namespace: 'test-ns',
+                        annotations: {
+                            "test-annotation": "test-annotation-value",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
+                        },
+                        labels: {
+                            "test-label": "test-label-value",
+                        },
+                        tags: [],
+                    },
+                    spec: {
+                        type: 'test-group:test-kind',
+                        owner: 'knative',
+                        system: 'knative-event-mesh',
+                        lifecycle: 'test',
+                        providesApis: [
+                            "api:test-ns/test-type"
+                        ],
+                    },
+                },
+            }
+        ];
+
+        for (const testCase of testCases) {
+            test(`Name: ${testCase.name}`, async () => {
+                const result = provider.buildSubscribableEntity(testCase.input);
+                expect(result).toEqual(testCase.expected);
+            });
+
+        }
+    });
+
+    describe('buildSourceEntity', () => {
+        const providerConfig:KnativeEventMeshProviderConfig = {
+            id: 'test',
+            baseUrl: 'http://example.com',
+            schedule: undefined,
+        };
+
+        const provider = new KnativeEventMeshProvider(providerConfig, logger, (null as any));
+
+        type TestCase = {
+            name:string;
+            input:Source;
+            expected:ComponentEntity;
+        };
+
+        const testCases:TestCase[] = [
+            {
+                name: 'minimal information',
+                input: {
+                    name: 'test',
+                    namespace: 'test',
+                    uid: 'test',
+                    group: 'test-group',
+                    kind: 'test-kind',
+                },
+                expected: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'Component',
+                    metadata: {
+                        name: 'test',
+                        namespace: 'test',
+                        annotations: {
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
+                        },
+                        labels: {},
+                        tags: [],
+                    },
+                    spec: {
+                        type: 'test-group:test-kind',
+                        owner: 'knative',
+                        system: 'knative-event-mesh',
+                        lifecycle: 'test',
+                        providesApis: [],
+                    },
+                },
+            },
+            {
+                name: 'all information',
+                input: {
+                    name: 'test-source',
+                    namespace: 'test-ns',
+                    uid: 'test-uid',
+                    labels: {
+                        "test-label": "test-label-value",
+                    },
+                    annotations: {
+                        "test-annotation": "test-annotation-value",
+                    },
+                    providedEventTypes: [
+                        "test-ns/test-type",
+                    ],
+                    group: "test-group",
+                    kind: "test-kind",
+                },
+                expected: {
+                    apiVersion: 'backstage.io/v1alpha1',
+                    kind: 'Component',
+                    metadata: {
+                        name: 'test-source',
+                        namespace: 'test-ns',
+                        annotations: {
+                            "test-annotation": "test-annotation-value",
+                            "backstage.io/managed-by-location": "url:http://example.com",
+                            "backstage.io/managed-by-origin-location": "url:http://example.com",
+                        },
+                        labels: {
+                            "test-label": "test-label-value",
+                        },
+                        tags: [],
+                    },
+                    spec: {
+                        type: 'test-group:test-kind',
+                        owner: 'knative',
+                        system: 'knative-event-mesh',
+                        lifecycle: 'test',
+                        providesApis: [
+                            "api:test-ns/test-type"
+                        ],
+                    },
+                },
+            }
+        ];
+
+        for (const testCase of testCases) {
+            test(`Name: ${testCase.name}`, async () => {
+                const result = provider.buildSourceEntity(testCase.input);
+                expect(result).toEqual(testCase.expected);
+            });
+
+        }
+    });
+
 });

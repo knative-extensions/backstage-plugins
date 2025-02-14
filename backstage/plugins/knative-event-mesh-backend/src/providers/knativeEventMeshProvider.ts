@@ -304,7 +304,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
         }
     }
 
-    private buildSubscribableEntity(subscribable:Subscribable) {
+    buildSubscribableEntity(subscribable:Subscribable) {
         const annotations = subscribable.annotations ?? {} as Record<string, string>;
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
 
@@ -329,7 +329,7 @@ export class KnativeEventMeshProvider implements EntityProvider {
         }
     }
 
-    private buildSourceEntity(source:Source) {
+    buildSourceEntity(source:Source) {
         const annotations = source.annotations ?? {} as Record<string, string>;
         annotations[ANNOTATION_ORIGIN_LOCATION] = annotations[ANNOTATION_LOCATION] = `url:${this.baseUrl}`;
 
