@@ -31,12 +31,10 @@ import (
 
 func TestBuildEventMesh(t *testing.T) {
 	tests := []struct {
-		name       string
-		brokers    []*eventingv1.Broker
-		eventTypes []*eventingv1beta2.EventType
-		triggers   []*eventingv1.Trigger
-		// subscribables []*eventingduckv1.Subscribable
-		// sources []*eventingv1.Source
+		name         string
+		brokers      []*eventingv1.Broker
+		eventTypes   []*eventingv1beta2.EventType
+		triggers     []*eventingv1.Trigger
 		extraObjects []runtime.Object
 		want         EventMesh
 		error        bool
