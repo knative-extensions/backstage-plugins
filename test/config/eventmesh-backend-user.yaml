@@ -39,6 +39,38 @@ rules:
       - get
       - list
       - watch
+  # permissions for channels and subscriptions
+  - apiGroups:
+      - "messaging.knative.dev"
+    resources:
+      - channels
+      - subscriptions
+    verbs:
+      - get
+      - list
+      - watch
+  # permissions for core sources
+  - apiGroups:
+      - "sources.knative.dev"
+    resources:
+      - apiserversources
+      - containersources
+      - integrationsources
+      - pingsources
+      - sinkbindings
+    verbs:
+      - get
+      - list
+      - watch
+  # permissions for listing duck types
+  - apiGroups:
+      - "apiextensions.k8s.io"
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
   # permissions to get subscribers for triggers
   # as subscribers can be any resource, we need to give access to all resources
   # we fetch subscribers one by one, we only need `get` verb

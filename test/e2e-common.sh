@@ -18,6 +18,8 @@ readonly SKIP_INITIALIZE=${SKIP_INITIALIZE:-false}
 readonly LOCAL_DEVELOPMENT=${LOCAL_DEVELOPMENT:-false}
 export KO_FLAGS="${KO_FLAGS:-}"
 
+readonly KAIL_VERSION=v0.16.1
+
 repo_root_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")/..
 
 source "$(go run knative.dev/hack/cmd/script e2e-tests.sh)"
@@ -108,6 +110,8 @@ function test_setup() {
 
   build_components_from_source || return $?
 
+  setup_logging_export || return $?
+
   install_head || return $?
 
   wait_until_pods_running knative-eventing || fail_test "System did not come up"
@@ -135,4 +139,19 @@ function save_release_artifacts() {
   # Copy our release artifacts into artifacts, so that release artifacts of a PR can be tested and reviewed without
   # building the project from source.
   cp "${BACKEND_ARTIFACT}" "${ARTIFACTS}/${BACKEND_ARTIFACT}" || return $?
+}
+
+function setup_logging_export() {
+  echo ">> Setting up logging..."
+
+  # Install kail if needed.
+  if ! which kail >/dev/null; then
+    go install github.com/boz/kail/cmd/kail@"${KAIL_VERSION}"
+  fi
+
+  # Capture all logs.
+  kail >"${ARTIFACTS}"/k8s.log.txt &
+  local kail_pid=$!
+  # Clean up kail so it doesn't interfere with job shutting down
+  add_trap "kill $kail_pid || true" EXIT
 }
