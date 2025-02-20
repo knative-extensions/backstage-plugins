@@ -14,7 +14,7 @@ import (
 
 	"knative.dev/backstage-plugins/backends/pkg/util"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -145,10 +145,15 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 
 	for _, subscription := range subscriptions.Items {
 		err := processSubscription(ctx, &subscription, subscribableMap, etByNamespacedName, dynamicClient, logger)
-		if err != nil {
+		if apierrors.IsUnauthorized(err) {
 			logger.Errorw("Error processing subscription", "error", err)
 			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
 			// there are no permissions to get a single subscriber resource
+		}
+
+		if err != nil {
+			logger.Errorw("Error processing subscription", "error", err)
+			return EventMesh{}, fmt.Errorf("error processing subscription: %w", err)
 		}
 	}
 
@@ -337,7 +342,7 @@ func fetchSubscribables(ctx context.Context, dynamicClient dynamic.Interface, lo
 		},
 	).List(ctx, metav1.ListOptions{LabelSelector: labels.Set{"messaging.knative.dev/subscribable": "true"}.String()})
 
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		return nil, nil
 	}
 
@@ -357,7 +362,7 @@ func fetchSubscribables(ctx context.Context, dynamicClient dynamic.Interface, lo
 
 		subscribableResources, err := dynamicClient.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			continue
 		}
 
@@ -385,7 +390,7 @@ func fetchSources(ctx context.Context, dynamicClient dynamic.Interface, logger *
 		},
 	).List(ctx, metav1.ListOptions{LabelSelector: labels.Set{"duck.knative.dev/source": "true"}.String()})
 
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		return nil, nil
 	}
 
@@ -405,7 +410,7 @@ func fetchSources(ctx context.Context, dynamicClient dynamic.Interface, logger *
 
 		sourceResources, err := dynamicClient.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			continue
 		}
 
@@ -457,7 +462,7 @@ func getSubscriberBackstageId(ctx context.Context, client dynamic.Interface, sub
 	refGvr, _ := meta.UnsafeGuessKindToResource(schema.FromAPIVersionAndKind(subRef.APIVersion, subRef.Kind))
 
 	resource, err := client.Resource(refGvr).Namespace(subRef.Namespace).Get(ctx, subRef.Name, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		logger.Debugw("Subscriber resource not found", "resource", subRef.Name)
 		return "", nil
 	}
