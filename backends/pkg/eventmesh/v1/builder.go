@@ -149,6 +149,7 @@ func BuildEventMesh(ctx context.Context, clientset versioned.Interface, dynamicC
 			logger.Errorw("Error processing subscription", "error", err)
 			// do not stop the Backstage plugin from rendering the rest of the data, e.g. because
 			// there are no permissions to get a single subscriber resource
+			continue
 		}
 
 		if err != nil {
