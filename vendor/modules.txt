@@ -1086,7 +1086,7 @@ knative.dev/eventing/pkg/reconciler/testing/v1
 knative.dev/eventing/pkg/reconciler/testing/v1beta2
 knative.dev/eventing/pkg/tracing
 knative.dev/eventing/pkg/utils
-# knative.dev/hack v0.0.0-20241010131451-05b2fb30cb4d
+# knative.dev/hack v0.0.0-20250314171439-742e1e50da78
 ## explicit; go 1.21
 knative.dev/hack
 # knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad
