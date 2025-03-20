@@ -15,7 +15,7 @@ require (
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
-	knative.dev/eventing v0.44.1-0.20250318091713-c022af72cd3a
+	knative.dev/eventing v0.44.1-0.20250319175722-897d1d17c211
 	knative.dev/hack v0.0.0-20250318155814-8f599b7a828c
 	knative.dev/pkg v0.0.0-20250312035536-b7bbf4be5dbd
 	knative.dev/reconciler-test v0.0.0-20250219013557-5ca0bd4fcad5
@@ -32,7 +32,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cert-manager/cert-manager v1.16.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudevents/conformance v0.2.0 // indirect
+	github.com/cloudevents/conformance v0.4.1 // indirect
 	github.com/cloudevents/sdk-go/sql/v2 v2.13.0 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.15.2 // indirect
 	github.com/coreos/go-oidc/v3 v3.9.0 // indirect
