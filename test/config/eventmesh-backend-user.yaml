@@ -43,6 +43,7 @@ rules:
   - apiGroups:
       - "messaging.knative.dev"
     resources:
+      - inmemorychannels
       - channels
       - subscriptions
     verbs:
