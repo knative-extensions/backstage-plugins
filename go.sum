@@ -1158,8 +1158,8 @@ knative.dev/eventing v0.45.1-0.20250514154546-3788fccf0466 h1:PCUdo+Jj5VkYklX24H
 knative.dev/eventing v0.45.1-0.20250514154546-3788fccf0466/go.mod h1:sk9GBWA660jeURkWq7Wyg4pbZVb3c0smxf+wzl+K7LM=
 knative.dev/hack v0.0.0-20250514121446-f525e187efdc h1:8HmclJlA0zNE/G1SkgdC3/IFSSyhaSz2iIhihU6YbEo=
 knative.dev/hack v0.0.0-20250514121446-f525e187efdc/go.mod h1:R0ritgYtjLDO9527h5vb5X6gfvt5LCrJ55BNbVDsWiY=
-knative.dev/pkg v0.0.0-20250514120547-19a13830745a h1:us4C+Ibb51CvWODzkp+3eq2zkTuFYx0EEHKbKrWmxd4=
-knative.dev/pkg v0.0.0-20250514120547-19a13830745a/go.mod h1:5QAsdJwoAn0rQ2oivlEhXv2NeDicwMiE3FisI/eYytc=
+knative.dev/pkg v0.0.0-20250515022847-873230f3a48e h1:W00CN0C7c5Inmu4pAqCh+l9z6VdLy8Ligqjhx4gcmE4=
+knative.dev/pkg v0.0.0-20250515022847-873230f3a48e/go.mod h1:XnQM562P39zl08Lp+eO+v06J3P9lgOgGJFO7BTJh9Ls=
 knative.dev/reconciler-test v0.0.0-20250430133707-10479dd8e9bb h1:qHYtNKRA7GQd5CXbjL8ux53ddHUqmjARlJi5BAeS5hs=
 knative.dev/reconciler-test v0.0.0-20250430133707-10479dd8e9bb/go.mod h1:2qN8+Sbf5Frl1NbrDttdUuLLVKJzNxKO8pdHWKFRHHA=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
