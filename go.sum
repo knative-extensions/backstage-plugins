@@ -481,8 +481,8 @@ github.com/spf13/cast v1.4.1/go.mod h1:Qx5cxh0v+4UWYiBimWS+eyWzqEqokIECu5etghLkU
 github.com/spf13/cobra v1.3.0/go.mod h1:BrRVncBjOJa/eUcVVm9CE+oC6as8k+VYr4NY7WCi9V4=
 github.com/spf13/jwalterweatherman v1.1.0/go.mod h1:aNWZUN0dPAAO/Ljvb5BEdw96iTZ0EXowPYD95IqWIGo=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/spf13/pflag v1.0.7 h1:vN6T9TfwStFPFM5XzjsvmzZkLuaLX+HS+0SeFLRgU6M=
-github.com/spf13/pflag v1.0.7/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
+github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/viper v1.10.0/go.mod h1:SoyBPwAtKDzypXNDFKN5kzH7ppppbGZtls1UpIy5AsM=
 github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518/go.mod h1:CKI4AZ4XmGV240rTHfO0hfE83S6/a3/Q1siZJ/vXf7A=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
@@ -1103,8 +1103,8 @@ knative.dev/eventing v0.46.1-0.20250911120720-1c920ca1452d h1:h36oypKEueHGlQVvRD
 knative.dev/eventing v0.46.1-0.20250911120720-1c920ca1452d/go.mod h1:NP1ypjTAP+eZTT1P/Xk8DAI+dkqkWatFP73IikS4BIo=
 knative.dev/hack v0.0.0-20250902153942-1499de21e119 h1:NbQvjnFK1tL489LN0qAybWy0E17Jpziwcv/XIHwfp6M=
 knative.dev/hack v0.0.0-20250902153942-1499de21e119/go.mod h1:R0ritgYtjLDO9527h5vb5X6gfvt5LCrJ55BNbVDsWiY=
-knative.dev/pkg v0.0.0-20250909010931-8c9c1d368e4b h1:Gscoeovr8XvQffYg6l2d7V8M5FuaJg34Hjg8e9sg21Y=
-knative.dev/pkg v0.0.0-20250909010931-8c9c1d368e4b/go.mod h1:OLfYBCgDhdEpaC2TEixU3e7byMEQmke/MHP3xsR7Gmo=
+knative.dev/pkg v0.0.0-20250915134926-5822f0559350 h1:MSsxDA7qzjciVPoVWcpS87wRV0dROcIU19Q8+ZaGmwk=
+knative.dev/pkg v0.0.0-20250915134926-5822f0559350/go.mod h1:DkVgQDFeN9NGnsj/2X8c/E1FEOiC+D9VlfvGiJc/mtU=
 knative.dev/reconciler-test v0.0.0-20250909113732-73218b8f3940 h1:iqaxc4FelXHVrUD6Jq/N2tr9DM4YNIlAZuU8eoUgU/k=
 knative.dev/reconciler-test v0.0.0-20250909113732-73218b8f3940/go.mod h1:1pexOYpq548o8aD564cgDpXoumingywDV3tZ5L7m9nI=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
