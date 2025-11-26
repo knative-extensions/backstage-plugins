@@ -9,16 +9,16 @@ require (
 	github.com/oapi-codegen/nethttp-middleware v1.0.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
 	github.com/oapi-codegen/runtime v1.1.1
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	k8s.io/api v0.34.2
 	k8s.io/apiextensions-apiserver v0.34.2
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
-	knative.dev/eventing v0.47.1-0.20251125110428-6ae393a7a914
-	knative.dev/hack v0.0.0-20251117013754-67a5b048bc27
-	knative.dev/pkg v0.0.0-20251124190527-7d24e8d1085f
-	knative.dev/reconciler-test v0.0.0-20251125021729-8948cae45660
+	knative.dev/eventing v0.47.1-0.20251126013633-47e18d46cb6c
+	knative.dev/hack v0.0.0-20251126013634-1484a9e9b641
+	knative.dev/pkg v0.0.0-20251126013532-e853b1d1d6bb
+	knative.dev/reconciler-test v0.0.0-20251126022416-3fd6f8701d7b
 )
 
 require (
