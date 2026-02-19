@@ -18,7 +18,7 @@ require (
 	knative.dev/eventing v0.48.1-0.20260216121903-d3feb16882a1
 	knative.dev/hack v0.0.0-20260212092700-0126b283bf20
 	knative.dev/pkg v0.0.0-20260217153756-998c038ce69d
-	knative.dev/reconciler-test v0.0.0-20260218022255-2bcf270babc9
+	knative.dev/reconciler-test v0.0.0-20260219013957-8e7a43df48d7
 )
 
 require (
