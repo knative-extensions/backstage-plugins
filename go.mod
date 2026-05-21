@@ -15,10 +15,10 @@ require (
 	k8s.io/apimachinery v0.35.5
 	k8s.io/client-go v0.35.5
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
-	knative.dev/eventing v0.49.1-0.20260518163531-504f7e00e182
+	knative.dev/eventing v0.49.1-0.20260521032925-b4a23c85e4bb
 	knative.dev/hack v0.0.0-20260428014158-b2a37f1b6e7b
 	knative.dev/pkg v0.0.0-20260520153225-91e8142be85c
-	knative.dev/reconciler-test v0.0.0-20260506021927-a807ab8bf3d4
+	knative.dev/reconciler-test v0.0.0-20260521141032-6a18bd4ee659
 )
 
 require (
